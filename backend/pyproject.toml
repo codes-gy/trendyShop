@@ -1,0 +1,24 @@
+[tool.ruff]
+# 전체적인 코드 스타일 및 규칙 설정
+target-version = "py312"
+line-length = 88 # Prettier의 printWidth와 같은 역할 (한 줄 최대 길이)
+
+src = ["app"]
+
+[tool.ruff.lint]
+# 사용할 린트 규칙들 선택
+select = [
+    "E",   # pycodestyle 에러 (PEP 8 표준 문법 검사)
+    "W",   # pycodestyle 경고
+    "F",   # Pyflakes (쓰이지 않는 import, 선언되지 않은 변수 차단)
+    "I",   # isort (임포트 구문 알파벳순 자동 정렬 - 완전 꿀기능!)
+    "B",   # flake8-bugbear (잠재적인 버그 유발 코드 탐지)
+    "UP",  # pyupgrade (최신 파이썬 문법으로 자동 전환 제안)
+]
+ignore = [] # 필요 시 제외할 규칙 코드 작성
+
+[tool.ruff.format]
+# Prettier처럼 포맷팅 규칙 설정
+quote-style = "double"        # 문자열은 쌍따옴표("")로 통일
+indent-style = "space"        # 들여쓰기는 스페이스로
+skip-magic-trailing-comma = false

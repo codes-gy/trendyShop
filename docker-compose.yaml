@@ -1,0 +1,47 @@
+name: shop
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: trendy-shop-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: trendy_user
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: trendy_commerce
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - shop-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    ports:
+      - "8080:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@trendy.com
+      PGADMIN_DEFAULT_PASSWORD : postgres
+    depends_on:
+      - postgres
+    networks:
+      - shop-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: trendy-shop-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    networks:
+      - shop-network
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  shop-network:
+    driver: bridge

@@ -1,0 +1,35 @@
+name: Backend CI
+
+on:
+  pull_request:
+    branches: ["main", "develop"]
+    paths:
+      - "backend/**"
+
+jobs:
+  backend-check:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: 1. 코드 가져오기
+        uses: actions/checkout@v4
+
+      - name: 2. 파이썬 환경 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12',
+          cache: 'pip'
+
+      - name: 3. 의존성 설치
+        run: pip install -r requirements.txt
+
+      - name: 4. 프리즈마 클라이언트 생성
+        run: prisma generate
+
+      - name: 5. 코드 스타일 및 문법 검사
+        run: |
+          ruff check .
+          ruff format --check .
