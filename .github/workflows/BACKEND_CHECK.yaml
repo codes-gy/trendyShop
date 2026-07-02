@@ -20,7 +20,7 @@ jobs:
       - name: 2. 파이썬 환경 설정
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12',
+          python-version: '3.12'
           cache: 'pip'
 
       - name: 3. 의존성 설치
