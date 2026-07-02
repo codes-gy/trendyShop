@@ -1,6 +1,7 @@
-from dotenv import load_dotenv
-import sys
 import os
+import sys
+
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -10,7 +11,7 @@ generated_path = os.path.abspath(os.path.join(current_dir, "../../generated"))
 if generated_path not in sys.path:
     sys.path.insert(0, generated_path)
 
-from prisma import Prisma # noqa: E402
+from prisma import Prisma # noqa: E402, I001
 
 # 전역에서 돌려쓸 싱글톤 인스턴스 생성
 db = Prisma(
