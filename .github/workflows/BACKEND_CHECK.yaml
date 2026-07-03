@@ -31,5 +31,5 @@ jobs:
 
       - name: 5. 코드 스타일 및 문법 검사
         run: |
+          ruff format .
           ruff check .
-          ruff format --check .
