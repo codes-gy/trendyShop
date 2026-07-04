@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 current_dir = os.path.dirname(__file__)
-generated_path = os.path.abspath(os.path.join(current_dir, "../../generated"))
+generated_path = os.path.abspath(os.path.join(current_dir, "../../prisma/generated"))
 
 if generated_path not in sys.path:
     sys.path.insert(0, generated_path)
