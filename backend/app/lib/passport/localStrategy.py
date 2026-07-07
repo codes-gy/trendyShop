@@ -1,9 +1,8 @@
-from fastapi import HTTPException, status, Depends
-from fastapi.security import OAuth2PasswordRequestForm
-from app.utils.cryptoUtil import verify_password
-from prisma import Prisma
 from app.repositories import AuthRepository as authRepository
 from app.types.authType import LoginRequest
+from app.utils.cryptoUtil import verify_password
+from fastapi import HTTPException, status
+from prisma import Prisma
 
 prisma = Prisma()
 
@@ -24,7 +23,7 @@ async def local_strategy(data : LoginRequest):
     #     )
 
     if user.get("provider") != "LOCAL":
-        
+
         return user
 
     if not user.get("password") or not verify_password(data.password, user.get("password")):

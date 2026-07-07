@@ -1,7 +1,11 @@
 from app.services import AuthService as auth_service
-from app.types.authType import SignupRequest, LoginRequest, TokenRefreshRequest, UpdateMeRequest
+from app.types.authType import (
+    LoginRequest,
+    SignupRequest,
+    TokenRefreshRequest,
+    UpdateMeRequest,
+)
 from fastapi import HTTPException, status
-
 
 
 async def signup(user: SignupRequest):

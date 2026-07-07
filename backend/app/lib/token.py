@@ -1,21 +1,20 @@
 import os
-from datetime import datetime, timedelta, timezone
-from typing import Dict, Any
-import jwt
-from fastapi import Response
+from datetime import UTC, datetime, timedelta
 
+import jwt
 from app.lib.env import (
-    JWT_ALGORITHM, 
+    ACCESS_TOKEN_COOKIE_NAME,
     JWT_ACCESS_TOKEN_SECRET,
+    JWT_ALGORITHM,
     JWT_REFRESH_TOKEN_SECRET,
-    ACCESS_TOKEN_COOKIE_NAME, 
-    REFRESH_TOKEN_COOKIE_NAME
+    REFRESH_TOKEN_COOKIE_NAME,
 )
+from fastapi import Response
 
 
 def generateTokens(userId : str) -> dict:
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     access_payload = {
         "sub": str(userId), # 표준 JWT 스펙에 맞춰 id 대신 sub(Subject)를 흔히 사용합니다.
         "id": userId,       # 기존 코드 호환용 id 추가
@@ -55,7 +54,7 @@ def setTokenCookies(res : Response, accessToken : str, refreshToken : str) -> No
         path="/auth/refresh",
         **cookie_options
     )
-    
+
 def clearTokenCookies(res : Response) -> None:
     res.delete_cookie(key=ACCESS_TOKEN_COOKIE_NAME)
     res.delete_cookie(key=REFRESH_TOKEN_COOKIE_NAME, path="/auth/refresh")
@@ -63,8 +62,8 @@ def clearTokenCookies(res : Response) -> None:
 def verifyAccessToken(accessToken : str) -> dict:
 
     decoded = dict(jwt.decode(
-        accessToken, 
-        JWT_ACCESS_TOKEN_SECRET, 
+        accessToken,
+        JWT_ACCESS_TOKEN_SECRET,
         algorithms=[JWT_ALGORITHM]
     ))
     return {

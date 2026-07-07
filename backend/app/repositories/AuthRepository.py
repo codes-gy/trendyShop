@@ -1,8 +1,9 @@
-from typing import Optional, Any, Dict
+from typing import Any
+
 from app.lib.prisma import db as prisma
 
 
-async def findUserByEmail(email: str) -> Optional[Dict[str, Any]]:
+async def findUserByEmail(email: str) -> dict[str, Any] | None:
     """
     [이메일로 유저 단일 조회]
     - 서비스 레이어에서 다루기 쉽도록 조회 결과를 dict로 변환하여 리턴합니다.
@@ -11,7 +12,7 @@ async def findUserByEmail(email: str) -> Optional[Dict[str, Any]]:
     return user.model_dump() if user else None
 
 
-async def findUserById(user_id: str) -> Optional[Dict[str, Any]]:
+async def findUserById(user_id: str) -> dict[str, Any] | None:
     """
     [ID로 유저 단일 조회]
     """
@@ -19,7 +20,7 @@ async def findUserById(user_id: str) -> Optional[Dict[str, Any]]:
     return user.model_dump() if user else None
 
 
-async def createUser(user_dict: Dict[str, Any]) -> Dict[str, Any]:
+async def createUser(user_dict: dict[str, Any]) -> dict[str, Any]:
     """
     [새로운 회원 데이터 생성 (회원가입)]
     - 서비스 단에서 가공된 완벽한 딕셔너리 데이터를 받아 저장합니다.
@@ -37,7 +38,7 @@ async def createUser(user_dict: Dict[str, Any]) -> Dict[str, Any]:
     return new_user.model_dump()
 
 
-async def updateUser(user_id: int, update_data: Dict[str, Any]) -> Dict[str, Any]:
+async def updateUser(user_id: int, update_data: dict[str, Any]) -> dict[str, Any]:
     """
     [회원 데이터 수정 (내 정보 수정)]
     """
@@ -55,7 +56,7 @@ async def updateUser(user_id: int, update_data: Dict[str, Any]) -> Dict[str, Any
 async def update_refresh_token(user_id: int, refresh_token: str) -> None:
     pass
 
-async def get_refresh_token(user_id: int) -> Optional[str]:
+async def get_refresh_token(user_id: int) -> str | None:
     return None
 
 async def clear_refresh_token(user_id: int) -> None:

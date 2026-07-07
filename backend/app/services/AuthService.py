@@ -1,10 +1,14 @@
 import jwt
-from fastapi import HTTPException, status
-from app.utils.cryptoUtil import hash_password, verify_password
-from app.lib.token import generateTokens, verifyAccessToken, verifyRefreshToken
+from app.lib.token import generateTokens, verifyRefreshToken
 from app.repositories import AuthRepository as authRepository
-from app.types.authType import SignupRequest, LoginRequest, UpdateMeRequest, TokenResponse
-from app.lib.token import generateTokens
+from app.types.authType import (
+    LoginRequest,
+    SignupRequest,
+    TokenResponse,
+)
+from app.utils.cryptoUtil import hash_password
+from fastapi import HTTPException, status
+
 
 async def signup(user_data: SignupRequest) -> dict:
     """
@@ -25,11 +29,11 @@ async def signup(user_data: SignupRequest) -> dict:
 
     # 3. 데이터 저장 지시 (레포지토리가 딕셔너리를 받도록 규격화)
     new_user = await authRepository.createUser(user_dict)
-    
+
     # 4. 패스워드 필드 제거 후 반환
     if "password" in new_user:
         del new_user["password"]
-        
+
     return new_user
 
 
@@ -57,10 +61,10 @@ async def readMe(user_id: int) -> dict:
             status_code=status.HTTP_404_NOT_FOUND,
             detail="존재하지 않는 회원 정보입니다."
         )
-    
+
     if "password" in user:
         del user["password"]
-        
+
     return user
 
 
@@ -82,10 +86,10 @@ async def updateMe(user_id: int, update_data: dict) -> dict:
 
     # 2. 리포지토리에 업데이트 요청 (딕셔너리를 그대로 넘겨줌)
     updated_user = await authRepository.updateUser(user_id, update_data)
-    
+
     if "password" in updated_user:
         del updated_user["password"]
-        
+
     return updated_user
 
 
@@ -106,11 +110,11 @@ async def refreshToken(refresh_token: str) -> dict:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="만료되었거나 유효하지 않은 토큰입니다. 다시 로그인해주세요."
-        )
+        ) from None
 
     user_id = payload.get("sub")
 
-    
+
     new_tokens = generateTokens(user_id)
-    
+
     return new_tokens

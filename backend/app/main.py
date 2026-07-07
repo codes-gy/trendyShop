@@ -1,9 +1,10 @@
 from contextlib import asynccontextmanager
 
 from app.lib.prisma import db as prisma
+from app.routers.authRouter import router as authRouter
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers.authRouter import router as authRouter
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

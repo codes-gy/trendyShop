@@ -1,8 +1,12 @@
 from typing import Annotated
 
 from app.controllers import AuthController as auth_controller
-from app.lib.passport.index import local_authenticate, jwt_authenticate
-from app.types.authType import TokenResponse, UserResponse, SignupRequest, TokenRefreshRequest
+from app.lib.passport.index import jwt_authenticate, local_authenticate
+from app.types.authType import (
+    SignupRequest,
+    TokenRefreshRequest,
+    UserResponse,
+)
 from fastapi import APIRouter, Depends, status
 
 router = APIRouter(tags=["Auth"])
