@@ -1,6 +1,11 @@
 [tool.ruff]
 # 전체적인 코드 스타일 및 규칙 설정
 target-version = "py312"
+extend-exclude = [
+    "**/generated/**",
+    "prisma/generated"
+]
+
 line-length = 88 # Prettier의 printWidth와 같은 역할 (한 줄 최대 길이)
 
 src = ["app"]

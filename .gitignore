@@ -21,3 +21,4 @@ frontend/public/
 .idea/
 .vscode/
 .DS_Store
+**.pyc
