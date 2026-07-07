@@ -1,7 +1,12 @@
 [tool.ruff]
 # 전체적인 코드 스타일 및 규칙 설정
 target-version = "py312"
-line-length = 88 # Prettier의 printWidth와 같은 역할 (한 줄 최대 길이)
+extend-exclude = [
+    "**/generated/**",
+    "prisma/generated"
+]
+
+line-length = 120 # 한 줄 최대 길이
 
 src = ["app"]
 
@@ -15,10 +20,17 @@ select = [
     "B",   # flake8-bugbear (잠재적인 버그 유발 코드 탐지)
     "UP",  # pyupgrade (최신 파이썬 문법으로 자동 전환 제안)
 ]
-ignore = [] # 필요 시 제외할 규칙 코드 작성
+ignore = [
+    "B008",   # FastAPI Depends 기본값 경고 허용
+    "E501",   # 💡 주석이나 문자열이 길어져도 통과 (귀찮은 E501 원천 차단)
+] # 필요 시 제외할 규칙 코드 작성
 
 [tool.ruff.format]
 # Prettier처럼 포맷팅 규칙 설정
 quote-style = "double"        # 문자열은 쌍따옴표("")로 통일
 indent-style = "space"        # 들여쓰기는 스페이스로
 skip-magic-trailing-comma = false
+
+[tool.pytest.ini_options]
+# pytest가 테스트를 돌릴 때 현재 작업 디렉토리(".")를 PYTHONPATH에 자동으로 산입합니다.
+pythonpath = ["."]

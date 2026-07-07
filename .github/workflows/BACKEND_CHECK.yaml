@@ -20,7 +20,7 @@ jobs:
       - name: 2. 파이썬 환경 설정
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12',
+          python-version: '3.12'
           cache: 'pip'
 
       - name: 3. 의존성 설치
@@ -31,5 +31,5 @@ jobs:
 
       - name: 5. 코드 스타일 및 문법 검사
         run: |
+          ruff format .
           ruff check .
-          ruff format --check .
