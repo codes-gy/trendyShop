@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import "./globals.css"; // 💡 기존 글로벌 CSS 가져오기
+import "./globals.css";
+import React from "react";
 
 export const metadata: Metadata = {
   title: "STUDIO.🛍️ | PREMIUM ESSENTIAL STORE",

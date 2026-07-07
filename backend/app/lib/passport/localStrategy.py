@@ -1,25 +1,33 @@
-from fastapi import HTTPException, status
-from passlib.context import CryptContext
+from fastapi import HTTPException, status, Depends
+from fastapi.security import OAuth2PasswordRequestForm
+from app.utils.cryptoUtil import verify_password
 from prisma import Prisma
+from app.repositories import AuthRepository as authRepository
+from app.types.authType import LoginRequest
 
 prisma = Prisma()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+async def local_strategy(data : LoginRequest):
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-async def local_strategy(email: str, password: str):
-    user = await prisma.user.find_unique(where={"email": email})
+    user = await authRepository.findUserByEmail(data.email)
 
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="이메일 또는 비밀번호가 잘못되었습니다.",
         )
+    # user_password = user.get("password") if isinstance(user, dict) else getattr(user, "password", None)
+    # if not user_password:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_401_UNAUTHORIZED,
+    #         detail="이메일 또는 비밀번호가 잘못되었습니다.",
+    #     )
 
-    if not verify_password(password, user.password):
+    if user.get("provider") != "LOCAL":
+        
+        return user
+
+    if not user.get("password") or not verify_password(data.password, user.get("password")):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="이메일 또는 비밀번호가 잘못되었습니다.",

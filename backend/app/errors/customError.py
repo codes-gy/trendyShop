@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from ..types.responseType import ErrorDetails, ErrorResponseModel
+from ..types.commonType import ErrorDetails, ErrorResponseModel
 from ..utils.loggerUtil import log_error
 
 

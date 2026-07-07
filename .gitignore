@@ -2,7 +2,11 @@
 backend/.venv/
 backend/**/__pycache__/
 backend/.env
-backend/app/prisma/generated/
+backend/prisma/generated/
+backend/.pytest_cache/
+backend/.ruff_cache/
+
+
 
 # 프론트엔드
 frontend/node_modules/
@@ -12,6 +16,8 @@ frontend/dist/
 frontend/build/
 frontend/.env
 frontend/public/
+
+
 .idea/
 .vscode/
 .DS_Store
