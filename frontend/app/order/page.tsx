@@ -45,25 +45,15 @@ export default function UltimateCheckoutPage() {
   return (
     // [1번 외벽 박스] 전체 배경색 및 폰트 레이아웃 설정
     <div className="min-h-screen bg-zinc-50 font-sans text-zinc-900 antialiased">
-      {/* [2번 내부 구역: 상단 헤더] 이탈 방지를 위한 미니멀 보안 헤더 */}
-      <header className="sticky top-0 z-50 flex items-center justify-between border-b border-zinc-200/80 bg-white px-6 py-4">
-        <div className="cursor-pointer text-xl font-black tracking-widest text-zinc-900">
-          STUDIO.🛍️
-        </div>
-        <div className="flex items-center space-x-1.5 text-xs font-semibold text-zinc-400">
-          <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-emerald-500"></span>
-          <span>SSL 암호화 안전 결제 구역</span>
-        </div>
-      </header>
-
       {/* [3번 메인 대형 컨텐츠 영역] */}
       <main className="mx-auto max-w-6xl px-6 py-10">
         {/* 상단 타이틀 및 결제 단계 인디케이터 */}
         <div className="mb-8 flex flex-col items-start justify-between gap-2 border-b border-zinc-200 pb-6 md:flex-row md:items-center">
           <div>
             <h1 className="text-3xl font-black tracking-tight">주문 / 결제</h1>
-            <p className="mt-1 text-xs text-zinc-400">
-              주문 정보를 입력하신 후 결제를 완료해 주세요.
+            <p className="mt-1 flex items-center gap-1.5 text-xs text-zinc-400">
+              <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"></span>
+              주문 정보를 입력하신 후 결제를 완료해 주세요. (SSL 암호화 안전 결제)
             </p>
           </div>
           <div className="flex items-center space-x-3 text-xs font-bold tracking-wide">
@@ -410,27 +400,13 @@ export default function UltimateCheckoutPage() {
                 {totalOrderPrice.toLocaleString()}원 안전 결제하기 🔒
               </button>
               <p className="mt-3 text-center text-[10px] leading-relaxed text-zinc-400">
-                본 주문은 STUDIO의 통합 물전산 망에 직접 동기화되어 즉시 출고 처리
+                본 주문은 TRNDY의 통합 물전산 망에 직접 동기화되어 즉시 출고 처리
                 대상으로 등록됩니다.
               </p>
             </div>
           </div>
         </div>
       </main>
-
-      {/* 고밀도 푸터 마감 */}
-      <footer className="mt-32 border-t border-zinc-800 bg-zinc-900 py-10 text-[10px] text-zinc-600">
-        <div className="mx-auto max-w-6xl space-y-2 px-6 text-center leading-relaxed">
-          <p>
-            © 2026 STUDIO. All rights reserved. Secure Checkout Pipeline powered by
-            Tailwind CSS v4.
-          </p>
-          <p className="text-zinc-700">
-            STUDIO 주식회사 | 대표자: 홍길동 | 서울시 중구 세종대로 110 |
-            통신판매업신고: 제 2026-서울중구-0000호
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }

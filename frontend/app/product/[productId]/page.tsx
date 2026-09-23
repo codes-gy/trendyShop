@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 interface ProductDetailProps {
   params: Promise<{ id: string }>;
 }
@@ -8,46 +10,17 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
   return (
     // [1번 외벽 박스] 배경색 및 기본 서체 셋팅
     <div className="min-h-screen bg-zinc-50 font-sans text-zinc-900 antialiased">
-      {/* [2번 내부 구역: 상단 헤더] */}
-      <header className="sticky top-0 z-50 flex items-center justify-between border-b border-zinc-200/80 bg-white/80 px-6 py-4 backdrop-blur-md">
-        <div className="cursor-pointer text-xl font-black tracking-widest text-zinc-900">
-          STUDIO.🛍️
-        </div>
-        <nav className="hidden space-x-8 text-sm font-medium text-zinc-600 md:flex">
-          <a href="#" className="transition hover:text-black">
-            NEW
-          </a>
-          <a href="#" className="font-semibold text-black">
-            SHOP
-          </a>
-          <a href="#" className="transition hover:text-black">
-            COLLECTION
-          </a>
-          <a
-            href="#"
-            className="font-semibold text-red-500 transition hover:text-red-600"
-          >
-            SALE %
-          </a>
-        </nav>
-        <div className="flex items-center space-x-4 text-sm font-medium">
-          <button className="rounded-full bg-zinc-950 px-4 py-2 text-xs text-white transition hover:bg-zinc-800">
-            장바구니 (3)
-          </button>
-        </div>
-      </header>
-
       {/* [3번 내부 구역: 메인 상세페이지 컨텐츠 시작] */}
       <main className="mx-auto max-w-6xl px-6 py-12">
         {/* 브레드크럼 */}
         <div className="mb-8 flex space-x-2 text-xs font-medium text-zinc-400">
-          <a href="#" className="hover:text-zinc-600">
+          <Link href="/" className="hover:text-zinc-600">
             HOME
-          </a>
+          </Link>
           <span>/</span>
-          <a href="#" className="hover:text-zinc-600">
+          <Link href="/product" className="hover:text-zinc-600">
             SHOP
-          </a>
+          </Link>
           <span>/</span>
           <span className="text-zinc-600">아이템 #{id}</span>
         </div>
@@ -94,7 +67,7 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
               </div>
               <p className="border-t border-zinc-200/60 pt-3 text-sm leading-relaxed text-zinc-500">
                 자연스러운 오버핏 실루엣과 바이오 워싱 가공을 거쳐 수축을 최소화한
-                STUDIO의 주력 넘버링 프리미엄 자켓 라인업입니다.
+                TRNDY의 주력 넘버링 프리미엄 자켓 라인업입니다.
               </p>
             </div>
 
@@ -182,7 +155,7 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
               </p>
             </div>
             <div className="flex h-[600px] items-center justify-center rounded-3xl bg-zinc-200 text-sm font-bold text-zinc-400">
-              스튜디오 피팅 모델 고화질 화보 01
+              TRNDY 피팅 모델 고화질 화보 01
             </div>
 
             {/* 컷 2: 마감 공정 디테일 */}
@@ -194,7 +167,7 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
                 해체주의적 절개와 더블 세세 봉제
               </h3>
               <p className="text-justify text-sm leading-relaxed text-zinc-500 md:text-center">
-                어깨선부터 소매단까지 떨어지는 비대칭 스티치는 STUDIO의 독자적인 패턴
+                어깨선부터 소매단까지 떨어지는 비대칭 스티치는 TRNDY의 독자적인 패턴
                 공법입니다. 보이지 않는 내부 안감 안쪽까지 해리 테이프로 꼼꼼히 감싸
                 시각적 완성도와 내구성을 모두 잡았습니다.
               </p>
@@ -287,7 +260,7 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
             함께 코디하면 좋은 추천 상품 🧥
           </h3>
           <p className="mb-8 text-xs text-zinc-400">
-            STUDIO 크루들이 제안하는 시그니처 믹스앤매치 셋업 라인
+            TRNDY 크루들이 제안하는 시그니처 믹스앤매치 셋업 라인
           </p>
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -319,7 +292,7 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
               📦 배송 가이드
             </h4>
             <p>
-              • STUDIO의 모든 의류 상품은 100% 무료 전용 박스 배송 시스템을 채택하고
+              • TRNDY의 모든 의류 상품은 100% 무료 전용 박스 배송 시스템을 채택하고
               있습니다.
             </p>
             <p>
@@ -349,11 +322,6 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
           </div>
         </section>
       </main>
-
-      {/* [6번 내부 구역: 하단 푸터] */}
-      <footer className="mt-32 border-t border-zinc-800 bg-zinc-900 py-10 text-center text-[11px] text-zinc-500">
-        © 2026 STUDIO. All rights reserved. Built with Tailwind CSS v4.
-      </footer>
     </div>
   );
 }

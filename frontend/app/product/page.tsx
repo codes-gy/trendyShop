@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function ProductListPage() {
   // 가상의 상품 데이터 8개 배열 (map 문법으로 뿌려줄 예정)
   const products = [
@@ -62,36 +64,13 @@ export default function ProductListPage() {
   return (
     // [1번 외벽 박스] 전체 배경 및 레이아웃 설정
     <div className="min-h-screen bg-zinc-50 font-sans text-zinc-900 antialiased">
-      {/* [2번 내부 구역: 상단 헤더] 동일하게 유지 */}
-      <header className="sticky top-0 z-50 flex items-center justify-between border-b border-zinc-200/80 bg-white/80 px-6 py-4 backdrop-blur-md">
-        <div className="cursor-pointer text-xl font-black tracking-widest text-zinc-900">
-          STUDIO.🛍️
-        </div>
-        <nav className="hidden space-x-8 text-sm font-medium text-zinc-600 md:flex">
-          <a href="#" className="font-semibold text-black">
-            SHOP
-          </a>
-          <a href="#" className="transition hover:text-black">
-            NEW
-          </a>
-          <a href="#" className="transition hover:text-black">
-            COLLECTION
-          </a>
-        </nav>
-        <div className="flex items-center space-x-4 text-sm font-medium">
-          <button className="rounded-full bg-zinc-950 px-4 py-2 text-xs text-white">
-            장바구니 (3)
-          </button>
-        </div>
-      </header>
-
       {/* [3번 메인 컨텐츠 영역] */}
       <main className="mx-auto max-w-6xl px-6 py-10">
         {/* 상단 타이틀 구역 */}
         <div className="mb-8 border-b border-zinc-200 pb-6">
           <h1 className="text-3xl font-black tracking-tight">모든 상품 보기</h1>
           <p className="mt-1.5 text-xs text-zinc-400">
-            STUDIO가 제안하는 시즌 에센셜 컬렉션 ({products.length})
+            TRNDY가 제안하는 시즌 에센셜 컬렉션 ({products.length})
           </p>
         </div>
 
@@ -130,7 +109,11 @@ export default function ProductListPage() {
         <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 md:grid-cols-4">
           {/* 자바스크립트 map 함수로 상품 리스트 자동 나열 */}
           {products.map((product) => (
-            <div key={product.id} className="group relative cursor-pointer">
+            <Link
+              key={product.id}
+              href={`/product/${product.id}`}
+              className="group relative block cursor-pointer"
+            >
               {/* 상품 이미지 박스 */}
               <div className="relative mb-3.5 flex aspect-[3/4] items-center justify-center overflow-hidden rounded-2xl bg-zinc-200 text-xs font-semibold tracking-wider text-zinc-400">
                 {/* 마우스 올리면 1.05배 확대 효과 */}
@@ -158,7 +141,7 @@ export default function ProductListPage() {
                 </h3>
                 <p className="text-sm font-bold text-zinc-950">{product.price}</p>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 
@@ -169,11 +152,6 @@ export default function ProductListPage() {
           </button>
         </div>
       </main>
-
-      {/* [4번 내부 구역: 하단 푸터] 마감 */}
-      <footer className="mt-32 border-t border-zinc-800 bg-zinc-900 py-8 text-center text-[11px] text-zinc-500">
-        © 2026 STUDIO. All rights reserved. Built with Tailwind CSS v4.
-      </footer>
     </div>
   );
 }
