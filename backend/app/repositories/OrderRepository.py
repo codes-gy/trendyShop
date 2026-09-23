@@ -95,3 +95,22 @@ async def createPayment(order_id: int, payment_key: str, method: str, amount: in
         }
     )
     return payment.model_dump()
+
+
+async def hasPurchasedProduct(user_id: int, product_id: int) -> bool:
+    """
+    [해당 유저가 이 상품을 구매(결제 완료 이상)한 이력이 있는지 확인]
+    - 리뷰 작성 자격 검증에 사용됩니다. (PENDING/CANCELLED 주문은 인정하지 않습니다.)
+    """
+    order_item = await prisma.orderitem.find_first(
+        where={
+            "productId": product_id,
+            "order": {
+                "is": {
+                    "userId": user_id,
+                    "status": {"in": ["PAID", "SHIPPED", "DELIVERED"]},
+                }
+            },
+        }
+    )
+    return order_item is not None
