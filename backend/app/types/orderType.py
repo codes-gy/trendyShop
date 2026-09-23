@@ -8,9 +8,7 @@ from pydantic import BaseModel, Field
 class OrderCreateRequest(BaseModel):
     """주문서 작성 및 생성 요청 구조"""
 
-    address: str = Field(
-        ..., min_length=5, description="정확한 배송지 주소를 입력해주세요."
-    )
+    address: str = Field(..., min_length=5, description="정확한 배송지 주소를 입력해주세요.")
     cartItemIds: list[int] = Field(
         ...,
         min_length=1,
@@ -23,7 +21,7 @@ class PaymentApproveRequest(BaseModel):
 
     orderId: int
     paymentKey: str = Field(..., description="외부 PG사 거래 식별키")
-    amount: int = Field(..., gte=0, description="실제 결제 요청 금액 일치 검증용")
+    amount: int = Field(..., ge=0, description="실제 결제 요청 금액 일치 검증용")
     method: Literal["CARD", "TRANSFER", "VIRTUAL_ACCOUNT", "POINT"]
 
 
