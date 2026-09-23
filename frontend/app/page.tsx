@@ -246,7 +246,7 @@ export default function HomePage() {
       </section>
 
       {/* 3단 비대칭 비주얼 그리드 */}
-      <section className="mx-auto max-w-7xl space-y-6 px-8 pt-24">
+      <section className="mx-auto max-w-7xl space-y-6 px-6 pt-24 md:px-8">
         <div className="text-center md:text-left">
           <h3 className="text-xs font-black tracking-widest text-zinc-400 uppercase">
             Season Vibe
@@ -301,7 +301,7 @@ export default function HomePage() {
       </section>
 
       {/* 순위형 대형 스탠드 바 */}
-      <section className="mx-auto max-w-7xl space-y-8 px-8 pt-24">
+      <section className="mx-auto max-w-7xl space-y-8 px-6 pt-24 md:px-8">
         <div className="border-b border-zinc-200 pb-4 text-center">
           <h3 className="text-2xl font-black tracking-tighter text-zinc-950">
             REALTIME THE BEST 3
@@ -349,7 +349,7 @@ export default function HomePage() {
       </section>
 
       {/* 대형 타임세일 컴포넌트 */}
-      <section className="mx-auto max-w-7xl px-8 pt-24">
+      <section className="mx-auto max-w-7xl px-6 pt-24 md:px-8">
         <div className="flex flex-col items-center justify-between gap-6 rounded-[36px] bg-gradient-to-r from-rose-900 to-zinc-900 p-8 text-white shadow-xl md:flex-row md:p-12">
           <div className="space-y-2 text-center md:text-left">
             <span className="inline-block rounded bg-rose-600 px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase">
@@ -363,7 +363,7 @@ export default function HomePage() {
               처리됩니다.
             </p>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-wrap items-center justify-center gap-4">
             <div className="flex space-x-2 text-center">
               <div className="w-14 rounded-xl bg-white/10 p-3 backdrop-blur-sm">
                 <span className="block text-lg font-black">02</span>
@@ -393,7 +393,7 @@ export default function HomePage() {
       </section>
 
       {/* 메인 코어 상품  */}
-      <main className="mx-auto max-w-7xl space-y-8 px-8 py-24">
+      <main className="mx-auto max-w-7xl space-y-8 px-6 py-24 md:px-8">
         <div className="flex flex-col space-y-3 border-b border-zinc-200 pb-6 md:flex-row md:items-end md:justify-between">
           <div>
             <h3 className="text-3xl font-black tracking-tighter text-zinc-950">
@@ -484,7 +484,7 @@ export default function HomePage() {
       </main>
 
       {/* 인터랙티브 기획 매거진 슬롯 */}
-      <section className="mx-auto max-w-7xl px-8 pb-24">
+      <section className="mx-auto max-w-7xl px-6 pb-24 md:px-8">
         <div className="grid grid-cols-1 items-center gap-12 rounded-[40px] bg-zinc-100 p-8 md:grid-cols-2 md:p-16">
           <div className="space-y-6">
             <div className="space-y-1">
@@ -529,13 +529,13 @@ export default function HomePage() {
       </section>
 
       {/* 볼드 볼륨 브랜드 대형 철학 매니페스토 */}
-      <section className="relative overflow-hidden bg-zinc-950 px-8 py-28 text-center text-white">
+      <section className="relative overflow-hidden bg-zinc-950 px-6 py-28 text-center text-white md:px-8">
         <div className="bg-radial-gradient absolute inset-0 from-zinc-900 to-zinc-950 opacity-40" />
         <div className="relative z-10 mx-auto max-w-3xl space-y-6">
           <h4 className="text-[10px] font-black tracking-widest text-zinc-500 uppercase">
             OUR ESSENCE MANIFESTO
           </h4>
-          <h3 className="text-4xl leading-none font-black tracking-tighter md:text-7xl">
+          <h3 className="text-4xl leading-[1.05] font-black tracking-tight md:text-7xl md:leading-none md:tracking-tighter">
             WE TEXTURE THE SILENCE
           </h3>
           <p className="mx-auto max-w-xl text-xs leading-relaxed font-light text-zinc-400 md:text-base">
@@ -553,7 +553,7 @@ export default function HomePage() {
       </section>
 
       {/* 소셜 스타일 스냅 보드 피드 */}
-      <section className="mx-auto max-w-7xl space-y-6 px-8 py-24">
+      <section className="mx-auto max-w-7xl space-y-6 px-6 py-24 md:px-8">
         <div className="space-y-1 text-center">
           <h3 className="text-2xl font-black tracking-tight text-zinc-950">
             #TRNDY_STYLE_BOOK
@@ -580,7 +580,7 @@ export default function HomePage() {
       </section>
 
       {/* 푸터 진입 전 신뢰 확보 아코디언 */}
-      <section className="mx-auto max-w-7xl px-8 pb-24">
+      <section className="mx-auto max-w-7xl px-6 pb-24 md:px-8">
         <div className="grid grid-cols-1 gap-6 border-t border-b border-zinc-200 py-8 text-xs text-zinc-600 md:grid-cols-3">
           <div className="space-y-1 rounded-2xl border border-zinc-100 bg-white p-4">
             <span className="block font-bold text-zinc-900">

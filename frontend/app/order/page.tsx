@@ -56,7 +56,7 @@ export default function UltimateCheckoutPage() {
               주문 정보를 입력하신 후 결제를 완료해 주세요. (SSL 암호화 안전 결제)
             </p>
           </div>
-          <div className="flex items-center space-x-3 text-xs font-bold tracking-wide">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold tracking-wide sm:gap-x-3 sm:text-xs">
             <span className="text-zinc-400">01 장바구니</span>
             <span className="text-zinc-300">➔</span>
             <span className="border-b-2 border-zinc-950 pb-0.5 text-zinc-950">

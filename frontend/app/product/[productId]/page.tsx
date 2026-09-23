@@ -106,7 +106,7 @@ export default function ProductDetailPage() {
               <h1 className="text-3xl leading-tight font-black tracking-tight text-zinc-900">
                 미니멀 캡슐 원단 시그니처 자켓 #{productId}
               </h1>
-              <div className="flex items-baseline space-x-3 pt-1">
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 pt-1">
                 <span className="text-2xl font-black text-zinc-950">
                   {UNIT_PRICE.toLocaleString()}원
                 </span>
