@@ -1,11 +1,42 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 
-interface ProductDetailProps {
-  params: Promise<{ id: string }>;
-}
+const COLORS = [
+  { name: "블랙", swatch: "bg-zinc-800" },
+  { name: "스톤", swatch: "bg-stone-400" },
+  { name: "라이트그레이", swatch: "bg-zinc-200" },
+];
+const SIZES = ["S", "M", "L", "XL"];
+const UNIT_PRICE = 159000;
+const ORIGINAL_PRICE = 199000;
 
-export default async function ProductDetailPage({ params }: ProductDetailProps) {
-  const { id } = await params;
+export default function ProductDetailPage() {
+  const { productId } = useParams<{ productId: string }>();
+
+  const [selectedThumbnail, setSelectedThumbnail] = useState(0);
+  const [selectedColorIndex, setSelectedColorIndex] = useState(0);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [cartFeedback, setCartFeedback] = useState(false);
+  const [sizeError, setSizeError] = useState(false);
+
+  const totalPrice = UNIT_PRICE * quantity;
+
+  const handleAddToCart = () => {
+    if (!selectedSize) {
+      setSizeError(true);
+      return;
+    }
+    setSizeError(false);
+    // TODO: 실제 장바구니 API/전역 상태 연동은 백엔드 연동 단계에서 진행 예정.
+    // 지금은 클릭 반응을 눈으로 확인할 수 있도록 1.5초간 담김 상태만 표시합니다.
+    setCartFeedback(true);
+    window.setTimeout(() => setCartFeedback(false), 1500);
+  };
 
   return (
     // [1번 외벽 박스] 배경색 및 기본 서체 셋팅
@@ -22,7 +53,7 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
             SHOP
           </Link>
           <span>/</span>
-          <span className="text-zinc-600">아이템 #{id}</span>
+          <span className="text-zinc-600">아이템 #{productId}</span>
         </div>
 
         {/* 1층 상단 스펙: 2분할 레이아웃 시작 (이미지 vs 주문창) */}
@@ -30,24 +61,25 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
           {/* 왼쪽: 상품 이미지 스택 */}
           <div className="space-y-4">
             <div className="relative flex aspect-[3/4] flex-col items-center justify-center rounded-3xl bg-zinc-200 text-lg font-bold text-zinc-400 shadow-sm">
-              <span>MAIN IMAGE #{id}</span>
+              <span>MAIN IMAGE #{selectedThumbnail + 1}</span>
               <span className="mt-1 text-xs font-normal text-zinc-500">
                 클릭 시 확대 보기
               </span>
             </div>
             <div className="grid grid-cols-4 gap-3">
-              <div className="flex aspect-square cursor-pointer items-center justify-center rounded-xl border-2 border-zinc-950 bg-zinc-300 text-[10px] font-bold text-zinc-500">
-                IMAGE 01
-              </div>
-              <div className="flex aspect-square cursor-pointer items-center justify-center rounded-xl bg-zinc-200 text-[10px] text-zinc-400">
-                IMAGE 02
-              </div>
-              <div className="flex aspect-square cursor-pointer items-center justify-center rounded-xl bg-zinc-200 text-[10px] text-zinc-400">
-                IMAGE 03
-              </div>
-              <div className="flex aspect-square cursor-pointer items-center justify-center rounded-xl bg-zinc-200 text-[10px] text-zinc-400">
-                IMAGE 04
-              </div>
+              {[0, 1, 2, 3].map((idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedThumbnail(idx)}
+                  className={`flex aspect-square cursor-pointer items-center justify-center rounded-xl text-[10px] font-bold transition ${
+                    selectedThumbnail === idx
+                      ? "border-2 border-zinc-950 bg-zinc-300 text-zinc-500"
+                      : "bg-zinc-200 text-zinc-400 hover:bg-zinc-300"
+                  }`}
+                >
+                  IMAGE {String(idx + 1).padStart(2, "0")}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -58,11 +90,15 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
                 BEST ITEM
               </span>
               <h1 className="text-3xl leading-tight font-black tracking-tight text-zinc-900">
-                미니멀 캡슐 원단 시그니처 자켓 #{id}
+                미니멀 캡슐 원단 시그니처 자켓 #{productId}
               </h1>
               <div className="flex items-baseline space-x-3 pt-1">
-                <span className="text-2xl font-black text-zinc-950">159,000원</span>
-                <span className="text-sm text-zinc-400 line-through">199,000원</span>
+                <span className="text-2xl font-black text-zinc-950">
+                  {UNIT_PRICE.toLocaleString()}원
+                </span>
+                <span className="text-sm text-zinc-400 line-through">
+                  {ORIGINAL_PRICE.toLocaleString()}원
+                </span>
                 <span className="text-sm font-bold text-red-500">20% OFF</span>
               </div>
               <p className="border-t border-zinc-200/60 pt-3 text-sm leading-relaxed text-zinc-500">
@@ -74,22 +110,37 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
             {/* 옵션 구역 */}
             <div className="space-y-4 border-t border-zinc-200/60 pt-4">
               <div className="space-y-2">
-                <span className="text-xs font-bold text-zinc-400">COLOR</span>
+                <span className="text-xs font-bold text-zinc-400">
+                  COLOR · {COLORS[selectedColorIndex].name}
+                </span>
                 <div className="flex space-x-3">
-                  <button className="h-7 w-7 rounded-full bg-zinc-800 ring-2 ring-zinc-950 ring-offset-2"></button>
-                  <button className="h-7 w-7 rounded-full bg-stone-400 ring-0 ring-zinc-300 ring-offset-2 hover:ring-1"></button>
-                  <button className="h-7 w-7 rounded-full bg-zinc-200 ring-0 ring-zinc-300 ring-offset-2 hover:ring-1"></button>
+                  {COLORS.map((color, idx) => (
+                    <button
+                      key={color.name}
+                      onClick={() => setSelectedColorIndex(idx)}
+                      aria-label={color.name}
+                      className={`h-7 w-7 rounded-full ring-offset-2 transition ${color.swatch} ${
+                        selectedColorIndex === idx
+                          ? "ring-2 ring-zinc-950"
+                          : "ring-0 ring-zinc-300 hover:ring-1"
+                      }`}
+                    ></button>
+                  ))}
                 </div>
               </div>
 
               <div className="space-y-2">
                 <span className="text-xs font-bold text-zinc-400">SIZE</span>
                 <div className="flex space-x-2">
-                  {["S", "M", "L", "XL"].map((size) => (
+                  {SIZES.map((size) => (
                     <button
                       key={size}
+                      onClick={() => {
+                        setSelectedSize(size);
+                        setSizeError(false);
+                      }}
                       className={`flex h-11 w-11 items-center justify-center rounded-xl border text-xs font-bold transition ${
-                        size === "L"
+                        selectedSize === size
                           ? "border-zinc-950 bg-zinc-950 text-white"
                           : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-400"
                       }`}
@@ -98,6 +149,32 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
                     </button>
                   ))}
                 </div>
+                {sizeError && (
+                  <p className="text-[11px] font-semibold text-red-500">
+                    사이즈를 먼저 선택해 주세요.
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <span className="text-xs font-bold text-zinc-400">수량</span>
+                <div className="flex w-fit items-center overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 text-sm">
+                  <button
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    className="px-4 py-2 font-bold transition hover:bg-zinc-200"
+                  >
+                    −
+                  </button>
+                  <span className="w-12 border-x border-zinc-200 bg-white px-3 py-2 text-center font-bold text-zinc-800">
+                    {quantity}
+                  </span>
+                  <button
+                    onClick={() => setQuantity((q) => Math.min(10, q + 1))}
+                    className="px-4 py-2 font-bold transition hover:bg-zinc-200"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -105,16 +182,39 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
             <div className="space-y-4 border-t border-zinc-200/60 pt-4">
               <div className="flex items-end justify-between">
                 <span className="text-xs font-semibold text-zinc-400">
-                  총 상품 금액
+                  총 상품 금액 ({quantity}개)
                 </span>
-                <span className="text-xl font-black text-zinc-950">159,000원</span>
+                <span className="text-xl font-black text-zinc-950">
+                  {totalPrice.toLocaleString()}원
+                </span>
               </div>
               <div className="flex space-x-3">
-                <button className="flex-1 rounded-xl bg-zinc-950 py-4 text-sm font-bold text-white transition hover:bg-zinc-800">
-                  바로 구매하기
+                <button
+                  onClick={handleAddToCart}
+                  className={`flex-1 rounded-xl py-4 text-sm font-bold transition ${
+                    cartFeedback
+                      ? "bg-emerald-600 text-white"
+                      : "border border-zinc-200 bg-white text-zinc-950 hover:bg-zinc-100"
+                  }`}
+                >
+                  {cartFeedback ? "담았습니다 ✓" : "장바구니 담기"}
                 </button>
-                <button className="rounded-xl border border-zinc-200 bg-white px-5 py-4 text-sm font-bold text-zinc-950 transition hover:bg-zinc-100">
-                  🖤
+                <Link
+                  href="/order"
+                  className="flex-1 rounded-xl bg-zinc-950 py-4 text-center text-sm font-bold text-white transition hover:bg-zinc-800"
+                >
+                  바로 구매하기
+                </Link>
+                <button
+                  onClick={() => setIsWishlisted((v) => !v)}
+                  aria-label="찜하기"
+                  className={`rounded-xl border px-5 py-4 text-sm font-bold transition ${
+                    isWishlisted
+                      ? "border-rose-500 bg-rose-50 text-rose-500"
+                      : "border-zinc-200 bg-white text-zinc-950 hover:bg-zinc-100"
+                  }`}
+                >
+                  {isWishlisted ? "🖤" : "🤍"}
                 </button>
               </div>
 
@@ -128,14 +228,24 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
         </div>
 
         {/* 2층: 긴 아코디언 상세 정보 보드 (하단 스크롤 레이아웃 대폭 확장) */}
-        <section className="mt-28 border-t border-zinc-200">
-          {/* 상단 스티키형 탭 메뉴 */}
+        <section
+          id="product-info"
+          className="mt-28 scroll-mt-24 border-t border-zinc-200"
+        >
+          {/* 상단 스티키형 탭 메뉴 (아래 섹션으로 스크롤 이동) */}
           <div className="sticky top-[61px] z-40 flex justify-center space-x-12 border-b border-zinc-200 bg-zinc-50/90 text-sm font-bold text-zinc-400 backdrop-blur-sm">
-            <button className="border-b-2 border-zinc-950 py-4 text-zinc-950">
+            <a
+              href="#product-info"
+              className="border-b-2 border-zinc-950 py-4 text-zinc-950"
+            >
               PRODUCT INFO
-            </button>
-            <button className="py-4 hover:text-zinc-600">CUSTOMER REVIEW (42)</button>
-            <button className="py-4 hover:text-zinc-600">DELIVERY & RETURN</button>
+            </a>
+            <a href="#customer-review" className="py-4 transition hover:text-zinc-600">
+              CUSTOMER REVIEW (42)
+            </a>
+            <a href="#delivery-return" className="py-4 transition hover:text-zinc-600">
+              DELIVERY & RETURN
+            </a>
           </div>
 
           {/* 무한 롱-스펙 정보 컷 */}
@@ -179,7 +289,10 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
         </section>
 
         {/* 3층: 대형 포토 및 댓글 리뷰 구역 (새로 추가) */}
-        <section className="mt-20 border-t border-zinc-200 pt-16">
+        <section
+          id="customer-review"
+          className="mt-20 scroll-mt-24 border-t border-zinc-200 pt-16"
+        >
           <div className="mb-10 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
             <div>
               <h2 className="flex items-center space-x-2 text-2xl font-black tracking-tight">
@@ -286,7 +399,10 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
         </section>
 
         {/* 5층: 배송/환불 교환 CS 텍스트 안내장 고도화 */}
-        <section className="mt-28 grid grid-cols-1 gap-8 rounded-3xl border border-zinc-200/70 bg-white p-6 text-[11px] leading-relaxed text-zinc-500 md:grid-cols-2 md:p-8">
+        <section
+          id="delivery-return"
+          className="mt-28 grid scroll-mt-24 grid-cols-1 gap-8 rounded-3xl border border-zinc-200/70 bg-white p-6 text-[11px] leading-relaxed text-zinc-500 md:grid-cols-2 md:p-8"
+        >
           <div className="space-y-2">
             <h4 className="text-xs font-black tracking-wider text-zinc-800 uppercase">
               📦 배송 가이드
