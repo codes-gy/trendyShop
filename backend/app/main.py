@@ -7,6 +7,7 @@ from app.routers.cartRouter import router as cartRouter
 from app.routers.deliveryRouter import router as deliveryRouter
 from app.routers.orderRouter import router as orderRouter
 from app.routers.productRouter import router as productRouter
+from app.routers.reviewRouter import router as reviewRouter
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -44,6 +45,7 @@ app.include_router(productRouter, prefix="/products")
 app.include_router(cartRouter, prefix="/cart")
 app.include_router(orderRouter, prefix="/orders")
 app.include_router(deliveryRouter, prefix="/deliveries")
+app.include_router(reviewRouter, prefix="/reviews")
 
 
 @app.get("/test")
