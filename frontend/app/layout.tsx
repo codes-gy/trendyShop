@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Link from "next/link";
 import React from "react";
 
 export const metadata: Metadata = {
-  title: "STUDIO.🛍️ | PREMIUM ESSENTIAL STORE",
-  description: "직조의 밀도가 자아내는 침묵의 우아함, 스튜디오 크리에이티브.",
+  title: "TRNDY. | PREMIUM ESSENTIAL STORE",
+  description: "직조의 밀도가 자아내는 침묵의 우아함, TRNDY 크리에이티브.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -18,40 +19,48 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         {/* 1. 글로벌 헤더 (Glassmorphism) */}
         <header className="sticky top-0 z-50 flex items-center justify-between border-b border-zinc-200/50 bg-white/70 px-8 py-5 backdrop-blur-lg">
-          <div className="cursor-pointer text-2xl font-black tracking-tighter text-zinc-900">
-            STUDIO<span className="font-light text-zinc-400">.</span>🛍️
-          </div>
+          <Link
+            href="/"
+            className="cursor-pointer text-2xl font-black tracking-tighter text-zinc-900"
+          >
+            TRNDY<span className="font-light text-zinc-400">.</span>
+          </Link>
           <nav className="hidden space-x-10 text-xs font-bold tracking-widest text-zinc-500 md:flex">
-            <a
-              href="#"
+            <Link
+              href="/product"
               className="relative text-zinc-950 transition after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-full after:bg-black hover:text-black"
             >
               NEW
-            </a>
-            <a href="#" className="transition hover:text-black">
+            </Link>
+            <Link href="/product" className="transition hover:text-black">
               SHOP
-            </a>
-            <a href="#" className="transition hover:text-black">
+            </Link>
+            {/* TODO: COLLECTION/EDITORIAL/SALE 전용 페이지가 아직 없어서 임시로 SHOP과 동일하게 연결 */}
+            <Link href="/product" className="transition hover:text-black">
               COLLECTION
-            </a>
-            <a href="#" className="transition hover:text-black">
+            </Link>
+            <Link href="/product" className="transition hover:text-black">
               EDITORIAL
-            </a>
-            <a
-              href="#"
+            </Link>
+            <Link
+              href="/product"
               className="font-extrabold text-rose-600 transition hover:text-rose-700"
             >
               SALE 30%
-            </a>
+            </Link>
           </nav>
           <div className="flex items-center space-x-5 text-xs font-bold tracking-wide">
+            {/* TODO: 마이페이지/로그인 페이지가 아직 없어서 다음 단계에서 연결 예정 */}
             <button className="text-zinc-400 transition hover:text-black">
               MY PAGE
             </button>
             <button className="text-zinc-900 hover:underline">SIGN IN</button>
-            <button className="relative rounded-full bg-zinc-950 px-4 py-2 text-white shadow-md transition hover:bg-zinc-800">
+            <Link
+              href="/cart"
+              className="relative rounded-full bg-zinc-950 px-4 py-2 text-white shadow-md transition hover:bg-zinc-800"
+            >
               CART <span className="ml-1 font-black text-rose-400">3</span>
-            </button>
+            </Link>
           </div>
         </header>
 
@@ -63,10 +72,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="mx-auto grid max-w-7xl grid-cols-1 gap-12 md:grid-cols-4">
             <div className="space-y-4">
               <h5 className="text-xl font-black tracking-tighter text-zinc-950">
-                STUDIO<span className="font-light text-zinc-300">.</span>🛍️
+                TRNDY<span className="font-light text-zinc-300">.</span>
               </h5>
               <p className="text-zinc-500">
-                주식회사 스튜디오숍 디지털 에센셜 그룹
+                주식회사 트렌디숍 디지털 에센셜 그룹
                 <br />
                 대표이사 : 김트렌디 · 사업자등록번호 : 123-45-67890
                 <br />
@@ -141,12 +150,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <br />
                 주말 및 전국 법정 공휴일 안전 휴무
                 <br />
-                공식 이메일: support@studio-shop.co.kr
+                공식 이메일: support@trndy-shop.co.kr
               </p>
             </div>
           </div>
           <div className="mx-auto mt-16 flex max-w-7xl flex-col justify-between gap-4 border-t border-zinc-100 pt-8 text-[11px] sm:flex-row">
-            <p>© 2026 STUDIO SHOP CREATIVE DIGITAL ENTERPRISE. All rights reserved.</p>
+            <p>© 2026 TRNDY SHOP CREATIVE DIGITAL ENTERPRISE. All rights reserved.</p>
             <div className="flex space-x-6 text-zinc-500">
               <a href="#" className="transition hover:text-zinc-950">
                 이용약관

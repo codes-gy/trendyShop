@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function UltimateCartPage() {
   // 1. 실제 백엔드와 연동될 법한 정교한 장바구니 상품 데이터 세트
   const cartItems = [
@@ -53,30 +55,6 @@ export default function UltimateCartPage() {
   return (
     // [1번 외벽 박스] 전체 배경색 및 폰트 디테일
     <div className="min-h-screen bg-zinc-50 font-sans text-zinc-900 antialiased">
-      {/* [2번 내부 구역: 상단 헤더] */}
-      <header className="sticky top-0 z-50 flex items-center justify-between border-b border-zinc-200/80 bg-white/80 px-6 py-4 backdrop-blur-md">
-        <div className="cursor-pointer text-xl font-black tracking-widest text-zinc-900">
-          STUDIO.🛍️
-        </div>
-        <nav className="hidden space-x-8 text-sm font-medium text-zinc-600 md:flex">
-          <a href="#" className="transition hover:text-black">
-            NEW
-          </a>
-          <a href="#" className="transition hover:text-black">
-            SHOP
-          </a>
-          <a href="#" className="transition hover:text-black">
-            COLLECTION
-          </a>
-        </nav>
-        <div className="flex items-center space-x-1 text-sm font-bold text-zinc-950">
-          <span>마이페이지</span>
-          <span className="rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px]">
-            VIP
-          </span>
-        </div>
-      </header>
-
       {/* [3번 메인 대형 컨텐츠 영역] */}
       <main className="mx-auto max-w-6xl px-6 py-10">
         {/* 3-1. 주문 스텝 인디케이터 상단 배치 */}
@@ -219,8 +197,8 @@ export default function UltimateCartPage() {
                     구매 금액별 스페셜 사은품 대상자 선정
                   </h4>
                   <p className="mt-0.5 text-amber-800/80">
-                    총 결제 금액이 15만원을 초과하여 [STUDIO 미니 브이넥 스카프]
-                    사은품이 주문서 작성 시 자동으로 무료 포함됩니다.
+                    총 결제 금액이 15만원을 초과하여 [TRNDY 미니 브이넥 스카프] 사은품이
+                    주문서 작성 시 자동으로 무료 포함됩니다.
                   </p>
                 </div>
               </div>
@@ -322,12 +300,18 @@ export default function UltimateCartPage() {
 
             {/* 메인 트리거 버튼 구역 */}
             <div className="space-y-2 pt-2">
-              <button className="w-full cursor-pointer rounded-2xl bg-zinc-950 py-4 text-center text-sm font-bold text-white shadow-md transition duration-200 hover:bg-zinc-800">
+              <Link
+                href="/order"
+                className="block w-full cursor-pointer rounded-2xl bg-zinc-950 py-4 text-center text-sm font-bold text-white shadow-md transition duration-200 hover:bg-zinc-800"
+              >
                 {totalOrderPrice.toLocaleString()}원 주문서 작성하기 🚀
-              </button>
-              <button className="w-full cursor-pointer rounded-xl border border-zinc-200 bg-white py-2.5 text-center text-xs font-semibold text-zinc-500 transition hover:bg-zinc-50">
+              </Link>
+              <Link
+                href="/product"
+                className="block w-full cursor-pointer rounded-xl border border-zinc-200 bg-white py-2.5 text-center text-xs font-semibold text-zinc-500 transition hover:bg-zinc-50"
+              >
                 ← 더 둘러보러 가기
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -421,11 +405,6 @@ export default function UltimateCartPage() {
           </div>
         </section>
       </main>
-
-      {/* [6번 내부 구역: 하단 푸터] */}
-      <footer className="mt-32 border-t border-zinc-800 bg-zinc-900 py-8 text-center text-[11px] text-zinc-500">
-        © 2026 STUDIO. All rights reserved. Built with Tailwind CSS v4.
-      </footer>
     </div>
   );
 }
