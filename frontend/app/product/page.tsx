@@ -1,65 +1,94 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 
+// 가상의 상품 데이터 8개 배열 (map 문법으로 뿌려줄 예정)
+const PRODUCTS = [
+  {
+    id: "1",
+    title: "린넨 오버사이즈 셔츠",
+    price: 45000,
+    tag: "NEW",
+    color: "베이지",
+    category: "상의",
+  },
+  {
+    id: "2",
+    title: "와이드 버뮤다 팬츠",
+    price: 52000,
+    tag: "BEST",
+    color: "블랙",
+    category: "하의",
+  },
+  {
+    id: "3",
+    title: "미니멀 크로스 레더백",
+    price: 128000,
+    tag: "",
+    color: "브라운",
+    category: "잡화",
+  },
+  {
+    id: "4",
+    title: "실버 버클 가죽 샌들",
+    price: 69000,
+    tag: "SALE",
+    color: "실버",
+    category: "잡화",
+  },
+  {
+    id: "5",
+    title: "소프트 세미와이드 데님",
+    price: 49000,
+    tag: "BEST",
+    color: "연청",
+    category: "하의",
+  },
+  {
+    id: "6",
+    title: "카고 포켓 롱 스커트",
+    price: 42000,
+    tag: "",
+    color: "카키",
+    category: "하의",
+  },
+  {
+    id: "7",
+    title: "스퀘어넥 슬리브리스 티",
+    price: 24000,
+    tag: "",
+    color: "화이트",
+    category: "상의",
+  },
+  {
+    id: "8",
+    title: "스트라이프 하프 니트",
+    price: 38000,
+    tag: "SALE",
+    color: "네이비",
+    category: "상의",
+  },
+];
+
+const CATEGORY_FILTERS = ["전체", "상의", "하의", "아우터", "잡화"];
+const SORT_OPTIONS = ["추천순", "신상품순", "낮은 가격순", "높은 가격순"] as const;
+
 export default function ProductListPage() {
-  // 가상의 상품 데이터 8개 배열 (map 문법으로 뿌려줄 예정)
-  const products = [
-    {
-      id: "1",
-      title: "린넨 오버사이즈 셔츠",
-      price: "45,000원",
-      tag: "NEW",
-      color: "베이지",
-    },
-    {
-      id: "2",
-      title: "와이드 버뮤다 팬츠",
-      price: "52,000원",
-      tag: "BEST",
-      color: "블랙",
-    },
-    {
-      id: "3",
-      title: "미니멀 크로스 레더백",
-      price: "128,000원",
-      tag: "",
-      color: "브라운",
-    },
-    {
-      id: "4",
-      title: "실버 버클 가죽 샌들",
-      price: "69,000원",
-      tag: "SALE",
-      color: "실버",
-    },
-    {
-      id: "5",
-      title: "소프트 세미와이드 데님",
-      price: "49,000원",
-      tag: "BEST",
-      color: "연청",
-    },
-    {
-      id: "6",
-      title: "카고 포켓 롱 스커트",
-      price: "42,000원",
-      tag: "",
-      color: "카키",
-    },
-    {
-      id: "7",
-      title: "스퀘어넥 슬리브리스 티",
-      price: "24,000원",
-      tag: "",
-      color: "화이트",
-    },
-    {
-      id: "8",
-      title: "스트라이프 하프 니트",
-      price: "38,000원",
-      tag: "SALE",
-      color: "네이비",
-    },
-  ];
+  const [activeCategory, setActiveCategory] = useState("전체");
+  const [sortBy, setSortBy] = useState<(typeof SORT_OPTIONS)[number]>("추천순");
+
+  const filteredProducts =
+    activeCategory === "전체"
+      ? PRODUCTS
+      : PRODUCTS.filter((product) => product.category === activeCategory);
+
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    if (sortBy === "신상품순") return Number(b.id) - Number(a.id);
+    if (sortBy === "낮은 가격순") return a.price - b.price;
+    if (sortBy === "높은 가격순") return b.price - a.price;
+    return 0; // 추천순: 원본 순서 유지
+  });
 
   return (
     // [1번 외벽 박스] 전체 배경 및 레이아웃 설정
@@ -70,7 +99,7 @@ export default function ProductListPage() {
         <div className="mb-8 border-b border-zinc-200 pb-6">
           <h1 className="text-3xl font-black tracking-tight">모든 상품 보기</h1>
           <p className="mt-1.5 text-xs text-zinc-400">
-            TRNDY가 제안하는 시즌 에센셜 컬렉션 ({products.length})
+            TRNDY가 제안하는 시즌 에센셜 컬렉션 ({sortedProducts.length})
           </p>
         </div>
 
@@ -78,29 +107,30 @@ export default function ProductListPage() {
         <div className="mb-6 flex items-center justify-between text-sm">
           {/* 왼쪽: 빠른 카테고리 필터 칩 (가로 정렬 flex) */}
           <div className="scrollbar-hide flex space-x-2 overflow-x-auto">
-            <button className="cursor-pointer rounded-full bg-zinc-950 px-4 py-2 text-xs font-semibold text-white">
-              전체
-            </button>
-            <button className="cursor-pointer rounded-full border border-zinc-200 bg-white px-4 py-2 text-xs text-zinc-600 transition hover:border-zinc-400">
-              상의
-            </button>
-            <button className="cursor-pointer rounded-full border border-zinc-200 bg-white px-4 py-2 text-xs text-zinc-600 transition hover:border-zinc-400">
-              하의
-            </button>
-            <button className="cursor-pointer rounded-full border border-zinc-200 bg-white px-4 py-2 text-xs text-zinc-600 transition hover:border-zinc-400">
-              아우터
-            </button>
-            <button className="cursor-pointer rounded-full border border-zinc-200 bg-white px-4 py-2 text-xs text-zinc-600 transition hover:border-zinc-400">
-              잡화
-            </button>
+            {CATEGORY_FILTERS.map((category) => (
+              <button
+                key={category}
+                onClick={() => setActiveCategory(category)}
+                className={`cursor-pointer rounded-full px-4 py-2 text-xs font-semibold whitespace-nowrap transition ${
+                  activeCategory === category
+                    ? "bg-zinc-950 text-white"
+                    : "border border-zinc-200 bg-white text-zinc-600 hover:border-zinc-400"
+                }`}
+              >
+                {category}
+              </button>
+            ))}
           </div>
 
           {/* 오른쪽: 정렬 기준 드롭다운 선택상자 */}
-          <select className="cursor-pointer rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-600 focus:border-zinc-400 focus:outline-none">
-            <option>추천순</option>
-            <option>신상품순</option>
-            <option>낮은 가격순</option>
-            <option>높은 가격순</option>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as (typeof SORT_OPTIONS)[number])}
+            className="cursor-pointer rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-600 focus:border-zinc-400 focus:outline-none"
+          >
+            {SORT_OPTIONS.map((option) => (
+              <option key={option}>{option}</option>
+            ))}
           </select>
         </div>
 
@@ -108,7 +138,7 @@ export default function ProductListPage() {
         {/* 모바일 2열(grid-cols-2), 태블릿 3열(sm:), 데스크탑 4열(md:) 반응형 완벽 대응 */}
         <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 md:grid-cols-4">
           {/* 자바스크립트 map 함수로 상품 리스트 자동 나열 */}
-          {products.map((product) => (
+          {sortedProducts.map((product) => (
             <Link
               key={product.id}
               href={`/product/${product.id}`}
@@ -139,13 +169,22 @@ export default function ProductListPage() {
                 <h3 className="truncate text-sm font-medium text-zinc-700 transition group-hover:text-zinc-950">
                   {product.title}
                 </h3>
-                <p className="text-sm font-bold text-zinc-950">{product.price}</p>
+                <p className="text-sm font-bold text-zinc-950">
+                  {product.price.toLocaleString()}원
+                </p>
               </div>
             </Link>
           ))}
         </div>
 
+        {sortedProducts.length === 0 && (
+          <p className="py-16 text-center text-sm text-zinc-400">
+            해당 카테고리에 상품이 없습니다.
+          </p>
+        )}
+
         {/* 🔄 하단 페이지네이션 / 더보기 버튼 */}
+        {/* TODO: 실제 상품이 8개뿐이라 페이지네이션 데이터가 없음. 상품 수가 늘어나면 연결 예정 */}
         <div className="mt-20 flex justify-center">
           <button className="cursor-pointer rounded-xl border border-zinc-200 bg-white px-8 py-3.5 text-xs font-semibold text-zinc-700 shadow-sm transition duration-200 hover:border-zinc-950 hover:text-zinc-950">
             더보기 (1 / 3) 🔽
