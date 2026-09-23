@@ -17,10 +17,7 @@ async def signup(user_data: SignupRequest) -> dict:
     # 1. 이메일 중복 체크
     existing_user = await authRepository.findUserByEmail(user_data.email)
     if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="이미 존재하는 이메일입니다."
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="이미 존재하는 이메일입니다.")
 
     # 2. 로컬 가입인 경우 비밀번호 해싱
     user_dict = user_data.model_dump()
@@ -45,8 +42,8 @@ async def login(user: LoginRequest) -> TokenResponse:
     data = generateTokens(user.get("id"))
 
     return {
-        "access_token": data.get("accessToken"),
-        "refresh_token": data.get("refreshToken"),
+        "accessToken": data.get("accessToken"),
+        "refreshToken": data.get("refreshToken"),
     }
 
 
@@ -57,10 +54,7 @@ async def readMe(user_id: int) -> dict:
     # 💡 수정: 정확한 레포지토리 함수명으로 변경 (auth_repository -> authRepository)
     user = await authRepository.findUserById(user_id)
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="존재하지 않는 회원 정보입니다."
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="존재하지 않는 회원 정보입니다.")
 
     if "password" in user:
         del user["password"]
@@ -74,15 +68,12 @@ async def updateMe(user_id: int, update_data: dict) -> dict:
     """
     current_user = await authRepository.findUserById(user_id)
     if not current_user:
-         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="회원을 찾을 수 없습니다.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="회원을 찾을 수 없습니다.")
 
     if current_user.get("email") != update_data.get("email"):
         email_check = await authRepository.findUserByEmail(update_data.get("email"))
         if email_check:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="이미 사용 중인 이메일 주소입니다."
-            )
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="이미 사용 중인 이메일 주소입니다.")
 
     # 2. 리포지토리에 업데이트 요청 (딕셔너리를 그대로 넘겨줌)
     updated_user = await authRepository.updateUser(user_id, update_data)
@@ -109,11 +100,10 @@ async def refreshToken(refresh_token: str) -> dict:
     except jwt.PyJWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="만료되었거나 유효하지 않은 토큰입니다. 다시 로그인해주세요."
+            detail="만료되었거나 유효하지 않은 토큰입니다. 다시 로그인해주세요.",
         ) from None
 
     user_id = payload.get("sub")
-
 
     new_tokens = generateTokens(user_id)
 
