@@ -1,14 +1,36 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "../lib/cart-context";
+import { PRODUCT_IMAGES } from "../lib/product-images";
 
 const RECOMMENDED_ITEMS = [
-  { name: "비건 레더 캡슐 미니 스퀘어백", price: 89000, tag: "MD추천" },
-  { name: "레이어드 최적화 소프트 나시 팩", price: 18000, tag: "" },
-  { name: "안티링클 텍스처드 미들 삭스", price: 8500, tag: "BEST" },
-  { name: "미니멀 하프 프레임 선글라스", price: 34000, tag: "SALE" },
+  {
+    name: "비건 레더 캡슐 미니 스퀘어백",
+    price: 89000,
+    tag: "MD추천",
+    image: PRODUCT_IMAGES.bag,
+  },
+  {
+    name: "레이어드 최적화 소프트 나시 팩",
+    price: 18000,
+    tag: "",
+    image: PRODUCT_IMAGES.blouse,
+  },
+  {
+    name: "안티링클 텍스처드 미들 삭스",
+    price: 8500,
+    tag: "BEST",
+    image: PRODUCT_IMAGES.socks,
+  },
+  {
+    name: "미니멀 하프 프레임 선글라스",
+    price: 34000,
+    tag: "SALE",
+    image: PRODUCT_IMAGES.sunglasses,
+  },
 ];
 
 export default function UltimateCartPage() {
@@ -71,7 +93,7 @@ export default function UltimateCartPage() {
       option: "옵션 자동 선택",
       price: rec.price,
       discountPrice: rec.price,
-      imgText: "NEW",
+      image: rec.image,
       status: "normal",
       deliveryType: "일반배송",
     });
@@ -180,11 +202,16 @@ export default function UltimateCartPage() {
                           onChange={() => toggleOne(item.id)}
                           className="h-4 w-4 cursor-pointer rounded border-zinc-300 text-zinc-950 focus:ring-zinc-950"
                         />
-                        <div className="relative flex aspect-[3/4] w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-zinc-100 text-[10px] font-bold tracking-wider text-zinc-400 md:w-24">
-                          {item.imgText}
+                        <div className="relative flex aspect-[3/4] w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-zinc-100 md:w-24">
+                          <Image
+                            src={item.image}
+                            alt={item.title}
+                            fill
+                            className="object-cover"
+                          />
                           {/* 무료배송/내일보장 마크 오버레이 */}
                           <span
-                            className={`absolute inset-x-0 bottom-0 py-0.5 text-center text-[9px] font-bold text-white ${
+                            className={`absolute inset-x-0 bottom-0 z-10 py-0.5 text-center text-[9px] font-bold text-white ${
                               item.deliveryType === "내일보장"
                                 ? "bg-blue-600/90"
                                 : "bg-zinc-500/90"
@@ -434,12 +461,15 @@ export default function UltimateCartPage() {
                 key={idx}
                 className="group cursor-pointer rounded-2xl border border-zinc-200/50 bg-white p-4 shadow-sm transition hover:shadow-md"
               >
-                <div className="relative mb-3.5 flex aspect-[3/4] items-center justify-center overflow-hidden rounded-xl bg-zinc-200 text-[10px] font-bold text-zinc-400">
-                  <span className="transition duration-300 group-hover:scale-105">
-                    REC ITEM 0{idx + 1}
-                  </span>
+                <div className="relative mb-3.5 aspect-[3/4] overflow-hidden rounded-xl bg-zinc-200">
+                  <Image
+                    src={rec.image}
+                    alt={rec.name}
+                    fill
+                    className="object-cover transition duration-300 group-hover:scale-105"
+                  />
                   {rec.tag && (
-                    <span className="absolute top-2 left-2 rounded-md bg-zinc-950 px-1.5 py-0.5 text-[8px] font-black text-white">
+                    <span className="absolute top-2 left-2 z-10 rounded-md bg-zinc-950 px-1.5 py-0.5 text-[8px] font-black text-white">
                       {rec.tag}
                     </span>
                   )}

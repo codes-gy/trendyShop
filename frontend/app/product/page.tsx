@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
+import { PRODUCT_IMAGES } from "../lib/product-images";
 
 // 가상의 상품 데이터 8개 배열 (map 문법으로 뿌려줄 예정)
 const PRODUCTS = [
   {
     id: "1",
+    image: PRODUCT_IMAGES.shirt,
     title: "린넨 오버사이즈 셔츠",
     price: 45000,
     tag: "NEW",
@@ -15,6 +18,7 @@ const PRODUCTS = [
   },
   {
     id: "2",
+    image: PRODUCT_IMAGES.casualPants,
     title: "와이드 버뮤다 팬츠",
     price: 52000,
     tag: "BEST",
@@ -23,6 +27,7 @@ const PRODUCTS = [
   },
   {
     id: "3",
+    image: PRODUCT_IMAGES.bag,
     title: "미니멀 크로스 레더백",
     price: 128000,
     tag: "",
@@ -31,6 +36,7 @@ const PRODUCTS = [
   },
   {
     id: "4",
+    image: PRODUCT_IMAGES.sneakers,
     title: "실버 버클 가죽 샌들",
     price: 69000,
     tag: "SALE",
@@ -39,6 +45,7 @@ const PRODUCTS = [
   },
   {
     id: "5",
+    image: PRODUCT_IMAGES.denim,
     title: "소프트 세미와이드 데님",
     price: 49000,
     tag: "BEST",
@@ -47,6 +54,7 @@ const PRODUCTS = [
   },
   {
     id: "6",
+    image: PRODUCT_IMAGES.slacks,
     title: "카고 포켓 롱 스커트",
     price: 42000,
     tag: "",
@@ -55,6 +63,7 @@ const PRODUCTS = [
   },
   {
     id: "7",
+    image: PRODUCT_IMAGES.blouse,
     title: "스퀘어넥 슬리브리스 티",
     price: 24000,
     tag: "",
@@ -63,6 +72,7 @@ const PRODUCTS = [
   },
   {
     id: "8",
+    image: PRODUCT_IMAGES.knit,
     title: "스트라이프 하프 니트",
     price: 38000,
     tag: "SALE",
@@ -145,16 +155,18 @@ export default function ProductListPage() {
               className="group relative block cursor-pointer"
             >
               {/* 상품 이미지 박스 */}
-              <div className="relative mb-3.5 flex aspect-[3/4] items-center justify-center overflow-hidden rounded-2xl bg-zinc-200 text-xs font-semibold tracking-wider text-zinc-400">
-                {/* 마우스 올리면 1.05배 확대 효과 */}
-                <span className="transition duration-500 group-hover:scale-105">
-                  IMAGE {product.id}
-                </span>
+              <div className="relative mb-3.5 flex aspect-[3/4] items-center justify-center overflow-hidden rounded-2xl bg-zinc-200">
+                <Image
+                  src={product.image}
+                  alt={product.title}
+                  fill
+                  className="object-cover transition duration-500 group-hover:scale-105"
+                />
 
                 {/* 좌상단 상태 배지 (NEW, BEST, SALE) */}
                 {product.tag && (
                   <span
-                    className={`absolute top-3 left-3 rounded-md px-2 py-1 text-[9px] font-black tracking-wider text-white ${
+                    className={`absolute top-3 left-3 z-10 rounded-md px-2 py-1 text-[9px] font-black tracking-wider text-white ${
                       product.tag === "SALE" ? "bg-red-500" : "bg-zinc-950"
                     }`}
                   >

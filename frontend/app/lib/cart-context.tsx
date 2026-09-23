@@ -9,7 +9,7 @@ export interface CartItem {
   price: number;
   discountPrice: number;
   quantity: number;
-  imgText: string;
+  image: string;
   status: "stock-alert" | "normal";
   deliveryType: string;
 }
