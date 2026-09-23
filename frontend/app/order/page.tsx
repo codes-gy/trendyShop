@@ -1,3 +1,6 @@
+import Image from "next/image";
+import { PRODUCT_IMAGES } from "../lib/product-images";
+
 export default function UltimateCheckoutPage() {
   // 1. 실제 백엔드 주문서 API에서 내려올 법한 상세 데이터 세트
   const orderItems = [
@@ -8,7 +11,7 @@ export default function UltimateCheckoutPage() {
       price: 159000,
       discountPrice: 127200,
       quantity: 1,
-      imgText: "JACKET",
+      image: PRODUCT_IMAGES.jacket,
     },
     {
       id: "3",
@@ -17,7 +20,7 @@ export default function UltimateCheckoutPage() {
       price: 52000,
       discountPrice: 41600,
       quantity: 1,
-      imgText: "PANTS",
+      image: PRODUCT_IMAGES.casualPants,
     },
   ];
 
@@ -192,8 +195,13 @@ export default function UltimateCheckoutPage() {
                     key={item.id}
                     className="flex space-x-4 py-4 first:pt-0 last:pb-0"
                   >
-                    <div className="flex aspect-[3/4] w-12 flex-shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-[9px] font-bold text-zinc-400">
-                      {item.imgText}
+                    <div className="relative aspect-[3/4] w-12 flex-shrink-0 overflow-hidden rounded-xl bg-zinc-100">
+                      <Image
+                        src={item.image}
+                        alt={item.title}
+                        fill
+                        className="object-cover"
+                      />
                     </div>
                     <div className="flex min-w-0 flex-1 flex-col justify-between">
                       <div className="flex items-start justify-between gap-4">

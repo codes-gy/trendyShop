@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCart } from "../../lib/cart-context";
+import { PRODUCT_IMAGES } from "../../lib/product-images";
 
 const COLORS = [
   { name: "블랙", swatch: "bg-zinc-800" },
@@ -43,7 +45,7 @@ export default function ProductDetailPage() {
       price: UNIT_PRICE,
       discountPrice: UNIT_PRICE,
       quantity,
-      imgText: `ITEM #${productId}`,
+      image: PRODUCT_IMAGES.jacket,
       status: "normal",
       deliveryType: "일반배송",
     });
@@ -74,24 +76,32 @@ export default function ProductDetailPage() {
         <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:gap-16">
           {/* 왼쪽: 상품 이미지 스택 */}
           <div className="space-y-4">
-            <div className="relative flex aspect-[3/4] flex-col items-center justify-center rounded-3xl bg-zinc-200 text-lg font-bold text-zinc-400 shadow-sm">
-              <span>MAIN IMAGE #{selectedThumbnail + 1}</span>
-              <span className="mt-1 text-xs font-normal text-zinc-500">
-                클릭 시 확대 보기
-              </span>
+            <div className="relative flex aspect-[3/4] flex-col items-center justify-center overflow-hidden rounded-3xl bg-zinc-200 shadow-sm">
+              <Image
+                src={PRODUCT_IMAGES.jacket}
+                alt={`미니멀 캡슐 원단 시그니처 자켓 #${productId}`}
+                fill
+                priority
+                className="object-cover"
+              />
             </div>
             <div className="grid grid-cols-4 gap-3">
               {[0, 1, 2, 3].map((idx) => (
                 <button
                   key={idx}
                   onClick={() => setSelectedThumbnail(idx)}
-                  className={`flex aspect-square cursor-pointer items-center justify-center rounded-xl text-[10px] font-bold transition ${
+                  className={`relative flex aspect-square cursor-pointer items-center justify-center overflow-hidden rounded-xl transition ${
                     selectedThumbnail === idx
-                      ? "border-2 border-zinc-950 bg-zinc-300 text-zinc-500"
-                      : "bg-zinc-200 text-zinc-400 hover:bg-zinc-300"
+                      ? "ring-2 ring-zinc-950"
+                      : "opacity-70 hover:opacity-100"
                   }`}
                 >
-                  IMAGE {String(idx + 1).padStart(2, "0")}
+                  <Image
+                    src={PRODUCT_IMAGES.jacket}
+                    alt={`썸네일 ${idx + 1}`}
+                    fill
+                    className="object-cover"
+                  />
                 </button>
               ))}
             </div>
@@ -278,8 +288,13 @@ export default function ProductDetailPage() {
                 쾌적한 여름 일상을 지원합니다.
               </p>
             </div>
-            <div className="flex h-[600px] items-center justify-center rounded-3xl bg-zinc-200 text-sm font-bold text-zinc-400">
-              TRNDY 피팅 모델 고화질 화보 01
+            <div className="relative h-[600px] overflow-hidden rounded-3xl bg-zinc-200">
+              <Image
+                src={PRODUCT_IMAGES.jacket}
+                alt="TRNDY 피팅 모델 고화질 화보 01"
+                fill
+                className="object-cover"
+              />
             </div>
 
             {/* 컷 2: 마감 공정 디테일 */}
@@ -296,8 +311,13 @@ export default function ProductDetailPage() {
                 시각적 완성도와 내구성을 모두 잡았습니다.
               </p>
             </div>
-            <div className="flex h-[600px] items-center justify-center rounded-3xl bg-zinc-200 text-sm font-bold text-zinc-400">
-              원단 줌인 및 마감 디테일 정밀 클로즈업 02
+            <div className="relative h-[600px] overflow-hidden rounded-3xl bg-zinc-200">
+              <Image
+                src={PRODUCT_IMAGES.cardigan}
+                alt="원단 줌인 및 마감 디테일 정밀 클로즈업 02"
+                fill
+                className="object-cover"
+              />
             </div>
           </div>
         </section>
@@ -327,9 +347,14 @@ export default function ProductDetailPage() {
             {[1, 2, 3, 4, 5, 6].map((idx) => (
               <div
                 key={idx}
-                className="flex aspect-square cursor-pointer items-center justify-center rounded-2xl bg-zinc-200 text-[10px] font-bold text-zinc-400 shadow-sm transition hover:opacity-80"
+                className="relative aspect-square cursor-pointer overflow-hidden rounded-2xl bg-zinc-200 shadow-sm transition hover:opacity-80"
               >
-                PHOTO 0{idx}
+                <Image
+                  src={PRODUCT_IMAGES.jacket}
+                  alt={`구매 고객 포토 리뷰 ${idx}`}
+                  fill
+                  className="object-cover"
+                />
               </div>
             ))}
           </div>
@@ -392,16 +417,35 @@ export default function ProductDetailPage() {
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {[
-              { name: "린넨 세미와이드 버뮤다 쇼츠", price: "48,000원" },
-              { name: "스퀘어 비건 머슬핏 슬리브리스", price: "22,000원" },
-              { name: "소가죽 오링 미니 바디 스케어백", price: "98,000원" },
-              { name: "실버 스퀘어 체인 링크 팔찌", price: "29,000원" },
+              {
+                name: "린넨 세미와이드 버뮤다 쇼츠",
+                price: "48,000원",
+                image: PRODUCT_IMAGES.casualPants,
+              },
+              {
+                name: "스퀘어 비건 머슬핏 슬리브리스",
+                price: "22,000원",
+                image: PRODUCT_IMAGES.blouse,
+              },
+              {
+                name: "소가죽 오링 미니 바디 스케어백",
+                price: "98,000원",
+                image: PRODUCT_IMAGES.bostonBag,
+              },
+              {
+                name: "실버 스퀘어 체인 링크 팔찌",
+                price: "29,000원",
+                image: PRODUCT_IMAGES.bracelet,
+              },
             ].map((item, idx) => (
               <div key={idx} className="group cursor-pointer">
-                <div className="mb-3 flex aspect-[3/4] items-center justify-center overflow-hidden rounded-2xl bg-zinc-200 text-[10px] font-bold text-zinc-400">
-                  <span className="transition duration-300 group-hover:scale-105">
-                    MATCH ITEM 0{idx + 1}
-                  </span>
+                <div className="relative mb-3 aspect-[3/4] overflow-hidden rounded-2xl bg-zinc-200">
+                  <Image
+                    src={item.image}
+                    alt={item.name}
+                    fill
+                    className="object-cover transition duration-300 group-hover:scale-105"
+                  />
                 </div>
                 <h4 className="truncate text-xs font-bold text-zinc-700 transition group-hover:text-black">
                   {item.name}
