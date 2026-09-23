@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from app.lib.passport.index import jwt_authenticate
@@ -121,6 +121,61 @@ def test_get_order_forbidden_for_other_users_order(monkeypatch):
     resp = client.get("/orders/1")
 
     assert resp.status_code == status.HTTP_403_FORBIDDEN
+
+
+def test_get_order_auto_expires_stale_pending_order(monkeypatch):
+    _as_user()
+
+    stale_created_at = datetime.now(UTC) - timedelta(hours=2)  # 기본 만료 기준(30분) 초과
+
+    async def fake_find_by_id(order_id):
+        return _sample_order(
+            id=1,
+            userId=1,
+            status="PENDING",
+            createdAt=stale_created_at,
+            orderItems=[{"productId": 1, "quantity": 2}],
+        )
+
+    captured = {}
+
+    async def fake_cancel_with_restock(order_id, order_items):
+        captured["order_id"] = order_id
+        captured["order_items"] = order_items
+        return _sample_order(id=1, status="CANCELLED")
+
+    monkeypatch.setattr(orderRepository, "findById", fake_find_by_id)
+    monkeypatch.setattr(orderRepository, "cancelOrderWithRestock", fake_cancel_with_restock)
+
+    resp = client.get("/orders/1")
+
+    assert resp.status_code == status.HTTP_200_OK
+    assert resp.json()["data"]["status"] == "CANCELLED"
+    assert captured["order_id"] == 1
+    assert captured["order_items"] == [{"productId": 1, "quantity": 2}]
+
+
+def test_get_order_does_not_expire_fresh_pending_order(monkeypatch):
+    _as_user()
+
+    async def fake_find_by_id(order_id):
+        return _sample_order(
+            id=1,
+            userId=1,
+            status="PENDING",
+            createdAt=datetime.now(UTC),  # 방금 생성됨
+        )
+
+    async def fake_cancel_with_restock(order_id, order_items):
+        raise AssertionError("만료 기준 이내인 주문은 취소되면 안 됩니다.")
+
+    monkeypatch.setattr(orderRepository, "findById", fake_find_by_id)
+    monkeypatch.setattr(orderRepository, "cancelOrderWithRestock", fake_cancel_with_restock)
+
+    resp = client.get("/orders/1")
+
+    assert resp.status_code == status.HTTP_200_OK
+    assert resp.json()["data"]["status"] == "PENDING"
 
 
 # -----------------------------------------------------------------
@@ -314,6 +369,44 @@ def test_approve_payment_already_paid(monkeypatch):
         return _sample_order(id=1, userId=1, status="PAID", totalPrice=20000)
 
     monkeypatch.setattr(orderRepository, "findById", fake_find_by_id)
+
+    resp = client.post(
+        "/orders/payment",
+        json={
+            "orderId": 1,
+            "paymentKey": "pg_key_123",
+            "amount": 20000,
+            "method": "CARD",
+        },
+    )
+
+    assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+
+def test_approve_payment_rejects_and_restocks_expired_pending_order(monkeypatch):
+    _as_user()
+
+    stale_created_at = datetime.now(UTC) - timedelta(hours=2)
+
+    async def fake_find_by_id(order_id):
+        return _sample_order(
+            id=1,
+            userId=1,
+            status="PENDING",
+            totalPrice=20000,
+            createdAt=stale_created_at,
+            orderItems=[{"productId": 1, "quantity": 2}],
+        )
+
+    async def fake_cancel_with_restock(order_id, order_items):
+        return _sample_order(id=1, status="CANCELLED")
+
+    async def fake_create_payment(*args, **kwargs):
+        raise AssertionError("만료되어 취소된 주문에 결제가 생성되면 안 됩니다.")
+
+    monkeypatch.setattr(orderRepository, "findById", fake_find_by_id)
+    monkeypatch.setattr(orderRepository, "cancelOrderWithRestock", fake_cancel_with_restock)
+    monkeypatch.setattr(orderRepository, "createPayment", fake_create_payment)
 
     resp = client.post(
         "/orders/payment",
