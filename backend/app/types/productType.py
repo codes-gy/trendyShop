@@ -8,8 +8,8 @@ class ProductSearchQuery(BaseModel):
     """상품 목록 조회 및 필터링/정렬용 쿼리 스트링 명세"""
 
     keyword: str | None = None
-    minPrice: int | None = Field(None, gte=0)
-    maxPrice: int | None = Field(None, gte=0)
+    minPrice: int | None = Field(None, ge=0)
+    maxPrice: int | None = Field(None, ge=0)
     isAvailableOnly: bool = False
     sortBy: Literal["createdAt", "priceAsc", "priceDesc"] = "createdAt"
     page: int = Field(1, ge=1)
@@ -32,8 +32,18 @@ class ProductCreateRequest(BaseModel):
 
     name: str = Field(..., min_length=1)
     description: str | None = None
-    price: int = Field(..., gte=0, description="상품 가격은 0원 이상이어야 합니다.")
-    stock: int = Field(..., gte=0, description="최초 재고는 0개 이상이어야 합니다.")
+    price: int = Field(..., ge=0, description="상품 가격은 0원 이상이어야 합니다.")
+    stock: int = Field(..., ge=0, description="최초 재고는 0개 이상이어야 합니다.")
+
+
+class ProductUpdateRequest(BaseModel):
+    """[관리자] 상품 정보 수정 요청 구조 (전달된 필드만 부분 수정)"""
+
+    name: str | None = Field(None, min_length=1)
+    description: str | None = None
+    price: int | None = Field(None, ge=0, description="상품 가격은 0원 이상이어야 합니다.")
+    stock: int | None = Field(None, ge=0, description="재고는 0개 이상이어야 합니다.")
+    isAvailable: bool | None = None
 
 
 class ProductResponse(BaseModel):

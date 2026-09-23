@@ -1,7 +1,9 @@
 from contextlib import asynccontextmanager
 
+from app.errors.customError import init_exception_handlers
 from app.lib.prisma import db as prisma
 from app.routers.authRouter import router as authRouter
+from app.routers.productRouter import router as productRouter
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -22,6 +24,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+init_exception_handlers(app)
+
 origins = ["http://localhost:4000", "http://127.0.0.1:4000"]
 
 app.add_middleware(
@@ -33,6 +37,7 @@ app.add_middleware(
 )
 
 app.include_router(authRouter, prefix="/auth")
+app.include_router(productRouter, prefix="/products")
 
 
 @app.get("/test")
