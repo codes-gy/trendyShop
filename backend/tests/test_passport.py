@@ -25,9 +25,10 @@ client = TestClient(app, raise_server_exceptions=False)
 # [테스트 라우터 ①] 로그인 엔드포인트
 @app.post("/api/login")
 async def login(payload: LoginPayload):
-    # 우리가 만든 local_strategy 검증
-    user = await local_strategy(payload.email, payload.password)
-    token = create_access_token(data={"sub": user.email})
+    # 우리가 만든 local_strategy 검증 (LoginRequest와 동일하게 .email/.password 속성을 가진 객체를 넘깁니다)
+    user = await local_strategy(payload)
+    # local_strategy는 AuthRepository를 거쳐 dict를 반환하므로 dict 접근으로 사용합니다.
+    token = create_access_token(data={"sub": str(user["id"])})
     return {"success": True, "message": "로그인 성공", "data": {"access_token": token}}
 
 
@@ -37,7 +38,7 @@ async def get_me(current_user: dict = Depends(jwt_strategy)):
     return {
         "success": True,
         "message": "인증 성공",
-        "data": {"email": current_user.email},
+        "data": {"email": current_user["email"]},
     }
 
 
@@ -55,14 +56,24 @@ def mock_prisma_user(monkeypatch):
 
     class FakeUser:
         def __init__(self):
+            self.id = 1
             self.email = "test@example.com"
             # passlib를 타지 않으므로 평문 형태나 임의의 문자열을 두어도 무방합니다.
             self.password = "mocked_hashed_password_123"
 
-    # 1. 가짜 데이터베이스 find_unique 조회 함수
+        def model_dump(self):
+            # AuthRepository가 실제 Prisma 모델에 하는 것과 동일하게 dict로 변환합니다.
+            return {
+                "id": self.id,
+                "email": self.email,
+                "password": self.password,
+                "provider": "LOCAL",
+            }
+
+    # 1. 가짜 데이터베이스 find_unique 조회 함수 (이메일 조회 / ID 조회 둘 다 지원)
     async def fake_find_unique(*args, **kwargs):
         where = kwargs.get("where", {})
-        if where.get("email") == "test@example.com":
+        if where.get("email") == "test@example.com" or where.get("id") == 1:
             return FakeUser()
         return None
 
@@ -89,9 +100,7 @@ def test_passport_and_exception_flow():
     # -------------------------------------------------------------
     # 시나리오 1: 잘못된 패스워드로 로그인 시도 (401 에러 및 exceptionUtil 검증)
     # -------------------------------------------------------------
-    wrong_login_resp = client.post(
-        "/api/login", json={"email": "test@example.com", "password": "wrong"}
-    )
+    wrong_login_resp = client.post("/api/login", json={"email": "test@example.com", "password": "wrong"})
     assert wrong_login_resp.status_code == status.HTTP_401_UNAUTHORIZED
 
     json_data = wrong_login_resp.json()
@@ -109,9 +118,7 @@ def test_passport_and_exception_flow():
     # -------------------------------------------------------------
     # 시나리오 3: 올바른 로그인 및 토큰 발급
     # -------------------------------------------------------------
-    login_resp = client.post(
-        "/api/login", json={"email": "test@example.com", "password": "password123"}
-    )
+    login_resp = client.post("/api/login", json={"email": "test@example.com", "password": "password123"})
     assert login_resp.status_code == status.HTTP_200_OK
     token = login_resp.json()["data"]["access_token"]
 
