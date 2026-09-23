@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useCart } from "../../lib/cart-context";
 
 const COLORS = [
   { name: "블랙", swatch: "bg-zinc-800" },
@@ -15,6 +16,7 @@ const ORIGINAL_PRICE = 199000;
 
 export default function ProductDetailPage() {
   const { productId } = useParams<{ productId: string }>();
+  const { addItem } = useCart();
 
   const [selectedThumbnail, setSelectedThumbnail] = useState(0);
   const [selectedColorIndex, setSelectedColorIndex] = useState(0);
@@ -32,8 +34,20 @@ export default function ProductDetailPage() {
       return;
     }
     setSizeError(false);
-    // TODO: 실제 장바구니 API/전역 상태 연동은 백엔드 연동 단계에서 진행 예정.
-    // 지금은 클릭 반응을 눈으로 확인할 수 있도록 1.5초간 담김 상태만 표시합니다.
+
+    const colorName = COLORS[selectedColorIndex].name;
+    addItem({
+      id: `${productId}-${colorName}-${selectedSize}`,
+      title: `미니멀 캡슐 원단 시그니처 자켓 #${productId}`,
+      option: `Color: ${colorName} / Size: ${selectedSize}`,
+      price: UNIT_PRICE,
+      discountPrice: UNIT_PRICE,
+      quantity,
+      imgText: `ITEM #${productId}`,
+      status: "normal",
+      deliveryType: "일반배송",
+    });
+
     setCartFeedback(true);
     window.setTimeout(() => setCartFeedback(false), 1500);
   };

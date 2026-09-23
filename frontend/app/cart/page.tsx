@@ -1,55 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-
-interface CartItem {
-  id: string;
-  title: string;
-  option: string;
-  price: number;
-  discountPrice: number;
-  quantity: number;
-  imgText: string;
-  status: "stock-alert" | "normal";
-  deliveryType: string;
-}
-
-const INITIAL_CART_ITEMS: CartItem[] = [
-  {
-    id: "1",
-    title: "워시드 미니멀 데님 자켓",
-    option: "Color: 블랙 / Size: L",
-    price: 159000,
-    discountPrice: 127200, // 20% 할인 반영 가격
-    quantity: 1,
-    imgText: "JACKET",
-    status: "stock-alert", // 품절 임박 표시용 상태값
-    deliveryType: "내일보장",
-  },
-  {
-    id: "2",
-    title: "린넨 오버사이즈 셔츠",
-    option: "Color: 베이지 / Size: M",
-    price: 45000,
-    discountPrice: 45000,
-    quantity: 2,
-    imgText: "SHIRTS",
-    status: "normal",
-    deliveryType: "일반배송",
-  },
-  {
-    id: "3",
-    title: "와이드 버뮤다 팬츠",
-    option: "Color: 블랙 / Size: M",
-    price: 52000,
-    discountPrice: 41600, // 20% 할인 반영 가격
-    quantity: 1,
-    imgText: "PANTS",
-    status: "normal",
-    deliveryType: "내일보장",
-  },
-];
+import { useCart } from "../lib/cart-context";
 
 const RECOMMENDED_ITEMS = [
   { name: "비건 레더 캡슐 미니 스퀘어백", price: 89000, tag: "MD추천" },
@@ -59,10 +12,32 @@ const RECOMMENDED_ITEMS = [
 ];
 
 export default function UltimateCartPage() {
-  const [cartItems, setCartItems] = useState<CartItem[]>(INITIAL_CART_ITEMS);
-  const [checkedIds, setCheckedIds] = useState<Set<string>>(
-    new Set(INITIAL_CART_ITEMS.map((item) => item.id)),
-  );
+  const {
+    items: cartItems,
+    addItem,
+    removeItem,
+    removeMany,
+    changeQuantity,
+  } = useCart();
+
+  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
+  const knownIdsRef = useRef<Set<string>>(new Set());
+
+  // 장바구니에 새로 들어온 상품은 기본 선택 상태로 시작하되, 사용자가 직접 선택
+  // 해제한 상품은 수량 변경 등으로 목록이 갱신되어도 계속 해제된 채로 유지합니다.
+  useEffect(() => {
+    const currentIds = new Set(cartItems.map((item) => item.id));
+    setCheckedIds((prev) => {
+      const next = new Set<string>();
+      currentIds.forEach((id) => {
+        if (prev.has(id) || !knownIdsRef.current.has(id)) {
+          next.add(id);
+        }
+      });
+      return next;
+    });
+    knownIdsRef.current = currentIds;
+  }, [cartItems]);
 
   const allChecked = cartItems.length > 0 && checkedIds.size === cartItems.length;
 
@@ -79,65 +54,27 @@ export default function UltimateCartPage() {
     });
   };
 
-  const removeItem = (id: string) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== id));
-    setCheckedIds((prev) => {
-      const next = new Set(prev);
-      next.delete(id);
-      return next;
-    });
-  };
-
   const removeChecked = () => {
-    setCartItems((prev) => prev.filter((item) => !checkedIds.has(item.id)));
-    setCheckedIds(new Set());
+    removeMany(Array.from(checkedIds));
   };
 
   const removeStockAlertItems = () => {
-    setCartItems((prev) => prev.filter((item) => item.status !== "stock-alert"));
-    setCheckedIds((prev) => {
-      const next = new Set(prev);
-      cartItems
-        .filter((item) => item.status === "stock-alert")
-        .forEach((item) => next.delete(item.id));
-      return next;
-    });
-  };
-
-  const changeQuantity = (id: string, delta: number) => {
-    setCartItems((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? { ...item, quantity: Math.max(1, Math.min(10, item.quantity + delta)) }
-          : item,
-      ),
+    removeMany(
+      cartItems.filter((item) => item.status === "stock-alert").map((item) => item.id),
     );
   };
 
   const addRecommendedItem = (rec: (typeof RECOMMENDED_ITEMS)[number]) => {
-    setCartItems((prev) => {
-      const existing = prev.find((item) => item.title === rec.name);
-      if (existing) {
-        return prev.map((item) =>
-          item.id === existing.id
-            ? { ...item, quantity: Math.min(10, item.quantity + 1) }
-            : item,
-        );
-      }
-      const newItem: CartItem = {
-        id: `rec-${rec.name}`,
-        title: rec.name,
-        option: "옵션 자동 선택",
-        price: rec.price,
-        discountPrice: rec.price,
-        quantity: 1,
-        imgText: "NEW",
-        status: "normal",
-        deliveryType: "일반배송",
-      };
-      return [...prev, newItem];
+    addItem({
+      id: `rec-${rec.name}`,
+      title: rec.name,
+      option: "옵션 자동 선택",
+      price: rec.price,
+      discountPrice: rec.price,
+      imgText: "NEW",
+      status: "normal",
+      deliveryType: "일반배송",
     });
-    setCheckedIds((prev) => new Set(prev).add(`rec-${rec.name}`));
   };
 
   // 2. 장바구니 금액 정밀 셈법 자동화 수식 (선택된 상품 기준으로 계산)
