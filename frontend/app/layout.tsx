@@ -18,11 +18,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-zinc-50 font-sans text-zinc-900 antialiased selection:bg-zinc-900 selection:text-white">
         <CartProvider>
           <AuthProvider>
-            {/* 0. 글로벌 알림 탑 바 */}
-            <div className="border-b border-zinc-800 bg-zinc-950 px-4 py-2.5 text-center text-xs font-bold tracking-widest text-zinc-200 uppercase">
-              🔥 NEXT GENERATION PREMIUM STORE · SIGN UP FOR 10% OFF EXCLUSIVE COUPOUN
-            </div>
-
             {/* 1. 글로벌 헤더 (Glassmorphism) */}
             <header className="sticky top-0 z-50 flex items-center justify-between border-b border-zinc-200/50 bg-white/70 px-8 py-5 backdrop-blur-lg">
               <Link

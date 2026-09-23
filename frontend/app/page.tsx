@@ -204,9 +204,9 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-zinc-50 font-sans text-zinc-900 antialiased selection:bg-zinc-900 selection:text-white">
       {/* 대형 시네마틱 히어로 섹션 */}
-      <section className="mx-auto max-w-7xl px-8 pt-8">
-        <div className="relative flex min-h-[650px] flex-col justify-end overflow-hidden rounded-[32px] bg-zinc-950 px-8 py-20 text-white shadow-lg md:px-16 md:py-24">
-          <div className="absolute inset-0 z-10 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
+      <section className="mx-auto max-w-7xl px-4 pt-6 md:px-8 md:pt-8">
+        <div className="relative flex min-h-[480px] flex-col justify-end overflow-hidden rounded-3xl bg-zinc-950 px-5 py-10 text-white shadow-lg md:min-h-[650px] md:rounded-[32px] md:px-16 md:py-24">
+          <div className="absolute inset-0 z-10 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-zinc-950/10" />
           <Image
             src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1800&auto=format&fit=crop"
             alt="Mega Main Banner"
@@ -215,12 +215,12 @@ export default function HomePage() {
             className="scale-105 object-cover object-center opacity-65 transition duration-[2000ms] hover:scale-100"
           />
 
-          <div className="relative z-20 max-w-3xl space-y-5">
+          <div className="relative z-20 max-w-3xl space-y-4 md:space-y-5">
             <div className="inline-flex items-center space-x-2 rounded-full border border-white/20 bg-black/40 px-3 py-1 text-[10px] font-black tracking-widest text-white uppercase backdrop-blur-md">
               <span className="h-1.5 w-1.5 animate-ping rounded-full bg-emerald-400" />
               <span>2026 SUMMER CAMPAIGN LIVE</span>
             </div>
-            <h2 className="text-4xl leading-none font-black tracking-tighter md:text-7xl">
+            <h2 className="text-4xl leading-[1.05] font-black tracking-tight md:text-7xl md:leading-none md:tracking-tighter">
               POETRY IN
               <br />
               SILHOUETTE
@@ -229,15 +229,15 @@ export default function HomePage() {
               직조의 밀도가 자아내는 침묵의 우아함. 가벼운 여름 바람을 통과시키는 시어링
               레이어와 미니멀리즘 아키텍처에서 조형적 힌트를 얻은 컬렉션.
             </p>
-            <div className="flex flex-wrap gap-3 pt-4">
+            <div className="flex flex-col gap-3 pt-4 sm:flex-row sm:flex-wrap">
               <Link
                 href="/product"
-                className="rounded-full bg-white px-8 py-4 text-xs font-black tracking-widest text-zinc-950 shadow-2xl transition duration-300 hover:bg-zinc-200"
+                className="rounded-full bg-white px-8 py-4 text-center text-xs font-black tracking-widest text-zinc-950 shadow-2xl transition duration-300 hover:bg-zinc-200"
               >
                 EXPLORE NEW IN
               </Link>
               {/* TODO: 캠페인 필름 영상 콘텐츠가 아직 없어서 다음 단계에서 연결 예정 */}
-              <button className="rounded-full border border-white/30 bg-white/5 px-8 py-4 text-xs font-black tracking-widest text-white backdrop-blur-md transition duration-300 hover:bg-white/10">
+              <button className="rounded-full border border-white/30 bg-white/5 px-8 py-4 text-center text-xs font-black tracking-widest text-white backdrop-blur-md transition duration-300 hover:bg-white/10">
                 WATCH CAMPAIGN FILM
               </button>
             </div>
