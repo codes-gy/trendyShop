@@ -119,3 +119,33 @@ async def approvePayment(user_id: int, data: PaymentApproveRequest) -> dict[str,
 
     await orderRepository.createPayment(order["id"], data.paymentKey, data.method, data.amount)
     return await orderRepository.updateStatus(order["id"], "PAID")
+
+
+_CANCELLABLE_STATUSES = {"PENDING", "PAID"}
+
+
+async def cancelOrder(user_id: int, order_id: int, is_admin: bool = False) -> dict[str, Any]:
+    """
+    [주문 취소 서비스] (주문자 본인 또는 관리자)
+    - 아직 배송이 시작되지 않은(PENDING/PAID) 주문만 취소할 수 있습니다.
+    - 주문 생성 시 차감했던 재고를 취소 시점에 복구합니다.
+    """
+    order = await orderRepository.findById(order_id)
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="존재하지 않는 주문입니다.",
+        )
+    if not is_admin and order["userId"] != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="본인의 주문만 취소할 수 있습니다.",
+        )
+    if order["status"] not in _CANCELLABLE_STATUSES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="배송이 시작되었거나 이미 완료/취소된 주문은 취소할 수 없습니다.",
+        )
+
+    order_items = [{"productId": item["productId"], "quantity": item["quantity"]} for item in order["orderItems"]]
+    return await orderRepository.cancelOrderWithRestock(order_id, order_items)

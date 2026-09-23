@@ -114,3 +114,25 @@ async def hasPurchasedProduct(user_id: int, product_id: int) -> bool:
         }
     )
     return order_item is not None
+
+
+async def cancelOrderWithRestock(order_id: int, order_items: list[dict[str, Any]]) -> dict[str, Any]:
+    """
+    [주문 취소 트랜잭션]
+    - 각 주문 아이템 수량만큼 상품 재고를 복구하고, 주문 상태를 CANCELLED로 전환합니다.
+      (재고 차감은 주문 생성 시점에 이루어지므로, PENDING/PAID 상태 모두 복구가 필요합니다.)
+    """
+    async with prisma.tx() as transaction:
+        for item in order_items:
+            await transaction.product.update(
+                where={"id": item["productId"]},
+                data={"stock": {"increment": item["quantity"]}},
+            )
+
+        cancelled_order = await transaction.order.update(
+            where={"id": order_id},
+            data={"status": "CANCELLED"},
+            include=_INCLUDE_FULL,
+        )
+
+    return cancelled_order.model_dump()
