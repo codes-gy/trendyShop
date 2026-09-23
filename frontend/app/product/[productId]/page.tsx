@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCart } from "../../lib/cart-context";
-import { PRODUCT_IMAGES } from "../../lib/product-images";
+import { getProductById, PRODUCTS } from "../../lib/products";
 
 const COLORS = [
   { name: "블랙", swatch: "bg-zinc-800" },
@@ -13,12 +13,11 @@ const COLORS = [
   { name: "라이트그레이", swatch: "bg-zinc-200" },
 ];
 const SIZES = ["S", "M", "L", "XL"];
-const UNIT_PRICE = 159000;
-const ORIGINAL_PRICE = 199000;
 
 export default function ProductDetailPage() {
   const { productId } = useParams<{ productId: string }>();
   const { addItem } = useCart();
+  const product = getProductById(Number(productId));
 
   const [selectedThumbnail, setSelectedThumbnail] = useState(0);
   const [selectedColorIndex, setSelectedColorIndex] = useState(0);
@@ -28,7 +27,25 @@ export default function ProductDetailPage() {
   const [cartFeedback, setCartFeedback] = useState(false);
   const [sizeError, setSizeError] = useState(false);
 
-  const totalPrice = UNIT_PRICE * quantity;
+  if (!product) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center space-y-4 bg-zinc-50 text-center">
+        <p className="text-sm font-bold text-zinc-500">존재하지 않는 상품입니다.</p>
+        <Link
+          href="/product"
+          className="rounded-xl bg-zinc-950 px-6 py-3 text-xs font-bold text-white transition hover:bg-zinc-800"
+        >
+          상품 목록으로 돌아가기
+        </Link>
+      </div>
+    );
+  }
+
+  const originalPrice =
+    product.discount > 0
+      ? Math.round(product.price / (1 - product.discount / 100))
+      : product.price;
+  const totalPrice = product.price * quantity;
 
   const handleAddToCart = () => {
     if (!selectedSize) {
@@ -39,13 +56,13 @@ export default function ProductDetailPage() {
 
     const colorName = COLORS[selectedColorIndex].name;
     addItem({
-      id: `${productId}-${colorName}-${selectedSize}`,
-      title: `미니멀 캡슐 원단 시그니처 자켓 #${productId}`,
+      id: `${product.id}-${colorName}-${selectedSize}`,
+      title: product.name,
       option: `Color: ${colorName} / Size: ${selectedSize}`,
-      price: UNIT_PRICE,
-      discountPrice: UNIT_PRICE,
+      price: product.price,
+      discountPrice: product.price,
       quantity,
-      image: PRODUCT_IMAGES.jacket,
+      image: product.image,
       status: "normal",
       deliveryType: "일반배송",
     });
@@ -69,7 +86,7 @@ export default function ProductDetailPage() {
             SHOP
           </Link>
           <span>/</span>
-          <span className="text-zinc-600">아이템 #{productId}</span>
+          <span className="text-zinc-600">{product.name}</span>
         </div>
 
         {/* 1층 상단 스펙: 2분할 레이아웃 시작 (이미지 vs 주문창) */}
@@ -78,8 +95,8 @@ export default function ProductDetailPage() {
           <div className="space-y-4">
             <div className="relative flex aspect-[3/4] flex-col items-center justify-center overflow-hidden rounded-3xl bg-zinc-200 shadow-sm">
               <Image
-                src={PRODUCT_IMAGES.jacket}
-                alt={`미니멀 캡슐 원단 시그니처 자켓 #${productId}`}
+                src={product.image}
+                alt={product.name}
                 fill
                 priority
                 className="object-cover"
@@ -97,7 +114,7 @@ export default function ProductDetailPage() {
                   }`}
                 >
                   <Image
-                    src={PRODUCT_IMAGES.jacket}
+                    src={product.image}
                     alt={`썸네일 ${idx + 1}`}
                     fill
                     className="object-cover"
@@ -110,24 +127,31 @@ export default function ProductDetailPage() {
           {/* 오른쪽: 정보 스펙창 */}
           <div className="flex flex-col justify-between space-y-6">
             <div className="space-y-3">
-              <span className="rounded-md bg-zinc-950 px-2.5 py-1 text-[10px] font-black tracking-wider text-white uppercase">
-                BEST ITEM
-              </span>
+              {product.tag && (
+                <span className="rounded-md bg-zinc-950 px-2.5 py-1 text-[10px] font-black tracking-wider text-white uppercase">
+                  {product.tag}
+                </span>
+              )}
               <h1 className="text-3xl leading-tight font-black tracking-tight text-zinc-900">
-                미니멀 캡슐 원단 시그니처 자켓 #{productId}
+                {product.name}
               </h1>
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 pt-1">
                 <span className="text-2xl font-black text-zinc-950">
-                  {UNIT_PRICE.toLocaleString()}원
+                  {product.price.toLocaleString()}원
                 </span>
-                <span className="text-sm text-zinc-400 line-through">
-                  {ORIGINAL_PRICE.toLocaleString()}원
-                </span>
-                <span className="text-sm font-bold text-red-500">20% OFF</span>
+                {product.discount > 0 && (
+                  <>
+                    <span className="text-sm text-zinc-400 line-through">
+                      {originalPrice.toLocaleString()}원
+                    </span>
+                    <span className="text-sm font-bold text-red-500">
+                      {product.discount}% OFF
+                    </span>
+                  </>
+                )}
               </div>
               <p className="border-t border-zinc-200/60 pt-3 text-sm leading-relaxed text-zinc-500">
-                자연스러운 오버핏 실루엣과 바이오 워싱 가공을 거쳐 수축을 최소화한
-                TRNDY의 주력 넘버링 프리미엄 자켓 라인업입니다.
+                {product.desc}
               </p>
             </div>
 
@@ -290,7 +314,7 @@ export default function ProductDetailPage() {
             </div>
             <div className="relative h-[600px] overflow-hidden rounded-3xl bg-zinc-200">
               <Image
-                src={PRODUCT_IMAGES.jacket}
+                src={product.image}
                 alt="TRNDY 피팅 모델 고화질 화보 01"
                 fill
                 className="object-cover"
@@ -313,7 +337,7 @@ export default function ProductDetailPage() {
             </div>
             <div className="relative h-[600px] overflow-hidden rounded-3xl bg-zinc-200">
               <Image
-                src={PRODUCT_IMAGES.cardigan}
+                src={product.image}
                 alt="원단 줌인 및 마감 디테일 정밀 클로즈업 02"
                 fill
                 className="object-cover"
@@ -350,7 +374,7 @@ export default function ProductDetailPage() {
                 className="relative aspect-square cursor-pointer overflow-hidden rounded-2xl bg-zinc-200 shadow-sm transition hover:opacity-80"
               >
                 <Image
-                  src={PRODUCT_IMAGES.jacket}
+                  src={product.image}
                   alt={`구매 고객 포토 리뷰 ${idx}`}
                   fill
                   className="object-cover"
@@ -416,43 +440,30 @@ export default function ProductDetailPage() {
           </p>
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {[
-              {
-                name: "린넨 세미와이드 버뮤다 쇼츠",
-                price: "48,000원",
-                image: PRODUCT_IMAGES.casualPants,
-              },
-              {
-                name: "스퀘어 비건 머슬핏 슬리브리스",
-                price: "22,000원",
-                image: PRODUCT_IMAGES.blouse,
-              },
-              {
-                name: "소가죽 오링 미니 바디 스케어백",
-                price: "98,000원",
-                image: PRODUCT_IMAGES.bostonBag,
-              },
-              {
-                name: "실버 스퀘어 체인 링크 팔찌",
-                price: "29,000원",
-                image: PRODUCT_IMAGES.bracelet,
-              },
-            ].map((item, idx) => (
-              <div key={idx} className="group cursor-pointer">
-                <div className="relative mb-3 aspect-[3/4] overflow-hidden rounded-2xl bg-zinc-200">
-                  <Image
-                    src={item.image}
-                    alt={item.name}
-                    fill
-                    className="object-cover transition duration-300 group-hover:scale-105"
-                  />
-                </div>
-                <h4 className="truncate text-xs font-bold text-zinc-700 transition group-hover:text-black">
-                  {item.name}
-                </h4>
-                <p className="mt-0.5 text-xs font-black text-zinc-950">{item.price}</p>
-              </div>
-            ))}
+            {PRODUCTS.filter((p) => p.id !== product.id)
+              .slice(0, 4)
+              .map((item) => (
+                <Link
+                  key={item.id}
+                  href={`/product/${item.id}`}
+                  className="group block cursor-pointer"
+                >
+                  <div className="relative mb-3 aspect-[3/4] overflow-hidden rounded-2xl bg-zinc-200">
+                    <Image
+                      src={item.image}
+                      alt={item.name}
+                      fill
+                      className="object-cover transition duration-300 group-hover:scale-105"
+                    />
+                  </div>
+                  <h4 className="truncate text-xs font-bold text-zinc-700 transition group-hover:text-black">
+                    {item.name}
+                  </h4>
+                  <p className="mt-0.5 text-xs font-black text-zinc-950">
+                    {item.price.toLocaleString()}원
+                  </p>
+                </Link>
+              ))}
           </div>
         </section>
 
