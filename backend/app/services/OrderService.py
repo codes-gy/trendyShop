@@ -1,5 +1,7 @@
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
+from app.lib.env import ORDER_PENDING_EXPIRATION_MINUTES
 from app.repositories import CartRepository as cartRepository
 from app.repositories import OrderRepository as orderRepository
 from app.repositories import ProductRepository as productRepository
@@ -14,6 +16,26 @@ async def listOrders(user_id: int) -> list[dict[str, Any]]:
     return await orderRepository.findManyByUser(user_id)
 
 
+async def _expireIfStale(order: dict[str, Any]) -> dict[str, Any]:
+    """
+    [결제 대기 주문 자동 만료 처리]
+    - PENDING 상태로 ORDER_PENDING_EXPIRATION_MINUTES 이상 방치된 주문을
+      조회/결제 승인 시점에 지연 평가(lazy evaluation)로 자동 취소하고 재고를 복구합니다.
+    - 별도의 백그라운드 스케줄러 없이 동작하는 간단한 방식이라, 아무도 접근하지 않는
+      주문은 만료 시각이 지나도 즉시 정리되지는 않는다는 한계가 있습니다.
+      (대량의 방치 주문을 주기적으로 정리하려면 스케줄러 기반 배치가 더 적합합니다.)
+    """
+    if order["status"] != "PENDING":
+        return order
+
+    elapsed = datetime.now(UTC) - order["createdAt"]
+    if elapsed < timedelta(minutes=ORDER_PENDING_EXPIRATION_MINUTES):
+        return order
+
+    order_items = [{"productId": item["productId"], "quantity": item["quantity"]} for item in order["orderItems"]]
+    return await orderRepository.cancelOrderWithRestock(order["id"], order_items)
+
+
 async def _getOwnedOrder(order_id: int, user_id: int) -> dict[str, Any]:
     order = await orderRepository.findById(order_id)
     if not order:
@@ -26,7 +48,7 @@ async def _getOwnedOrder(order_id: int, user_id: int) -> dict[str, Any]:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="본인의 주문만 조회할 수 있습니다.",
         )
-    return order
+    return await _expireIfStale(order)
 
 
 async def getOrder(order_id: int, user_id: int) -> dict[str, Any]:
@@ -104,6 +126,12 @@ async def approvePayment(user_id: int, data: PaymentApproveRequest) -> dict[str,
       결제 정보를 생성한 뒤 주문 상태를 PAID로 전환합니다.
     """
     order = await _getOwnedOrder(data.orderId, user_id)
+
+    if order["status"] == "CANCELLED":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="이미 취소된 주문입니다. (결제 대기 시간이 만료되었을 수 있습니다.)",
+        )
 
     if order["status"] != "PENDING":
         raise HTTPException(
