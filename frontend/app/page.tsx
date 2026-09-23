@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 // 가짜 상품 데이터
 const MEGASHOP_PRODUCTS = [
@@ -162,8 +163,23 @@ const INSTA_FEEDS = [
 ];
 
 export default function HomePage() {
-  const [activeTab, setActiveTab] = useState("ALL");
+  const [activeTab, setActiveTab] = useState("ALL PRODUCTS");
   const [journalIndex, setJournalIndex] = useState(0);
+
+  const CATEGORY_FILTERS: Record<string, string[]> = {
+    "ALL PRODUCTS": [],
+    NEW: ["NEW"],
+    DENIM: ["DENIM"],
+    KNIT: ["KNIT"],
+    "BAG & SHOES": ["BAG", "SHOES"],
+  };
+
+  const filteredProducts =
+    activeTab === "ALL PRODUCTS"
+      ? MEGASHOP_PRODUCTS
+      : MEGASHOP_PRODUCTS.filter((product) =>
+          CATEGORY_FILTERS[activeTab]?.includes(product.category),
+        );
 
   const journals = [
     {
@@ -214,9 +230,13 @@ export default function HomePage() {
               레이어와 미니멀리즘 아키텍처에서 조형적 힌트를 얻은 컬렉션.
             </p>
             <div className="flex flex-wrap gap-3 pt-4">
-              <button className="rounded-full bg-white px-8 py-4 text-xs font-black tracking-widest text-zinc-950 shadow-2xl transition duration-300 hover:bg-zinc-200">
+              <Link
+                href="/product"
+                className="rounded-full bg-white px-8 py-4 text-xs font-black tracking-widest text-zinc-950 shadow-2xl transition duration-300 hover:bg-zinc-200"
+              >
                 EXPLORE NEW IN
-              </button>
+              </Link>
+              {/* TODO: 캠페인 필름 영상 콘텐츠가 아직 없어서 다음 단계에서 연결 예정 */}
               <button className="rounded-full border border-white/30 bg-white/5 px-8 py-4 text-xs font-black tracking-widest text-white backdrop-blur-md transition duration-300 hover:bg-white/10">
                 WATCH CAMPAIGN FILM
               </button>
@@ -287,14 +307,15 @@ export default function HomePage() {
             REALTIME THE BEST 3
           </h3>
           <p className="mt-1 text-xs text-zinc-500">
-            현재 스튜디오에서 단 한 시간 동안 가장 폭발적으로 판매된 시그니처 톱 티어
+            현재 TRNDY에서 단 한 시간 동안 가장 폭발적으로 판매된 시그니처 톱 티어
             삼인방
           </p>
         </div>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {MEGASHOP_PRODUCTS.slice(0, 3).map((prod, i) => (
-            <div
+            <Link
               key={prod.id}
+              href={`/product/${prod.id}`}
               className="flex items-center space-x-4 rounded-3xl border border-zinc-100 bg-white p-5 shadow-sm transition hover:shadow-md"
             >
               <span className="w-8 text-center text-4xl font-black tracking-tighter text-zinc-200 italic">
@@ -322,7 +343,7 @@ export default function HomePage() {
                   {prod.price.toLocaleString()}원
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
@@ -361,9 +382,12 @@ export default function HomePage() {
                 </span>
               </div>
             </div>
-            <button className="rounded-full bg-white px-6 py-4 text-xs font-black tracking-widest text-zinc-900 shadow-md transition hover:bg-zinc-100">
+            <Link
+              href="/product"
+              className="rounded-full bg-white px-6 py-4 text-xs font-black tracking-widest text-zinc-900 shadow-md transition hover:bg-zinc-100"
+            >
               SHOP NOW →
-            </button>
+            </Link>
           </div>
         </div>
       </section>
@@ -376,7 +400,7 @@ export default function HomePage() {
               COLLECTION ITEMS
             </h3>
             <p className="mt-1 text-xs text-zinc-500">
-              오직 스튜디오 리미티드 패키지 라인으로 구성된 고해상도 아카이브 아이템
+              오직 TRNDY 리미티드 패키지 라인으로 구성된 고해상도 아카이브 아이템
               전체보기
             </p>
           </div>
@@ -400,8 +424,12 @@ export default function HomePage() {
 
         {/* 12개 대용량 마스터 격자 그리드 */}
         <div className="grid grid-cols-1 gap-x-6 gap-y-16 sm:grid-cols-2 lg:grid-cols-4">
-          {MEGASHOP_PRODUCTS.map((product) => (
-            <div key={product.id} className="group relative cursor-pointer">
+          {filteredProducts.map((product) => (
+            <Link
+              key={product.id}
+              href={`/product/${product.id}`}
+              className="group relative block cursor-pointer"
+            >
               <div className="relative aspect-[3/4] w-full overflow-hidden rounded-3xl bg-zinc-100 shadow-sm transition-all duration-500 group-hover:shadow-md">
                 <Image
                   src={product.image}
@@ -445,9 +473,14 @@ export default function HomePage() {
                   )}
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
+        {filteredProducts.length === 0 && (
+          <p className="py-16 text-center text-sm text-zinc-400">
+            해당 카테고리에 상품이 없습니다.
+          </p>
+        )}
       </main>
 
       {/* 인터랙티브 기획 매거진 슬롯 */}
@@ -459,7 +492,7 @@ export default function HomePage() {
                 Interactive Magazine
               </span>
               <h3 className="text-3xl font-black tracking-tighter text-zinc-950">
-                STUDIO COUTURE JOURNAL
+                TRNDY COUTURE JOURNAL
               </h3>
             </div>
 
@@ -506,11 +539,12 @@ export default function HomePage() {
             WE TEXTURE THE SILENCE
           </h3>
           <p className="mx-auto max-w-xl text-xs leading-relaxed font-light text-zinc-400 md:text-base">
-            스튜디오는 보이지 않는 디테일에 집착합니다. 옷의 내부 스티치 공정, 목덜미에
+            TRNDY는 보이지 않는 디테일에 집착합니다. 옷의 내부 스티치 공정, 목덜미에
             닿는 라벨의 부드러움, 주머니가 기울어지는 미세한 각도까지. 우리는 일상이
             닿는 침묵의 순간들을 완벽하게 텍스처링합니다.
           </p>
           <div className="pt-2">
+            {/* TODO: 브랜드 스토리/장인정신 소개 페이지가 아직 없어서 다음 단계에서 연결 예정 */}
             <button className="rounded-full bg-white px-6 py-3 text-xs font-black tracking-widest text-zinc-950 uppercase transition hover:bg-zinc-200">
               Read Our Craftsmanship
             </button>
@@ -522,7 +556,7 @@ export default function HomePage() {
       <section className="mx-auto max-w-7xl space-y-6 px-8 py-24">
         <div className="space-y-1 text-center">
           <h3 className="text-2xl font-black tracking-tight text-zinc-950">
-            #STUDIO_STYLE_BOOK
+            #TRNDY_STYLE_BOOK
           </h3>
           <p className="text-xs font-light text-zinc-400">
             패션 그 이상의 커뮤니티, 전 세계 컬렉터들의 연출 리얼 피드백
