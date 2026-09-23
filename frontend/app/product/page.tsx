@@ -3,83 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { PRODUCT_IMAGES } from "../lib/product-images";
-
-// 가상의 상품 데이터 8개 배열 (map 문법으로 뿌려줄 예정)
-const PRODUCTS = [
-  {
-    id: "1",
-    image: PRODUCT_IMAGES.shirt,
-    title: "린넨 오버사이즈 셔츠",
-    price: 45000,
-    tag: "NEW",
-    color: "베이지",
-    category: "상의",
-  },
-  {
-    id: "2",
-    image: PRODUCT_IMAGES.casualPants,
-    title: "와이드 버뮤다 팬츠",
-    price: 52000,
-    tag: "BEST",
-    color: "블랙",
-    category: "하의",
-  },
-  {
-    id: "3",
-    image: PRODUCT_IMAGES.bag,
-    title: "미니멀 크로스 레더백",
-    price: 128000,
-    tag: "",
-    color: "브라운",
-    category: "잡화",
-  },
-  {
-    id: "4",
-    image: PRODUCT_IMAGES.sneakers,
-    title: "실버 버클 가죽 샌들",
-    price: 69000,
-    tag: "SALE",
-    color: "실버",
-    category: "잡화",
-  },
-  {
-    id: "5",
-    image: PRODUCT_IMAGES.denim,
-    title: "소프트 세미와이드 데님",
-    price: 49000,
-    tag: "BEST",
-    color: "연청",
-    category: "하의",
-  },
-  {
-    id: "6",
-    image: PRODUCT_IMAGES.slacks,
-    title: "카고 포켓 롱 스커트",
-    price: 42000,
-    tag: "",
-    color: "카키",
-    category: "하의",
-  },
-  {
-    id: "7",
-    image: PRODUCT_IMAGES.blouse,
-    title: "스퀘어넥 슬리브리스 티",
-    price: 24000,
-    tag: "",
-    color: "화이트",
-    category: "상의",
-  },
-  {
-    id: "8",
-    image: PRODUCT_IMAGES.knit,
-    title: "스트라이프 하프 니트",
-    price: 38000,
-    tag: "SALE",
-    color: "네이비",
-    category: "상의",
-  },
-];
+import { PRODUCTS } from "../lib/products";
 
 const CATEGORY_FILTERS = ["전체", "상의", "하의", "아우터", "잡화"];
 const SORT_OPTIONS = ["추천순", "신상품순", "낮은 가격순", "높은 가격순"] as const;
@@ -91,7 +15,7 @@ export default function ProductListPage() {
   const filteredProducts =
     activeCategory === "전체"
       ? PRODUCTS
-      : PRODUCTS.filter((product) => product.category === activeCategory);
+      : PRODUCTS.filter((product) => product.shopCategory === activeCategory);
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     if (sortBy === "신상품순") return Number(b.id) - Number(a.id);
@@ -158,7 +82,7 @@ export default function ProductListPage() {
               <div className="relative mb-3.5 flex aspect-[3/4] items-center justify-center overflow-hidden rounded-2xl bg-zinc-200">
                 <Image
                   src={product.image}
-                  alt={product.title}
+                  alt={product.name}
                   fill
                   className="object-cover transition duration-500 group-hover:scale-105"
                 />
@@ -179,7 +103,7 @@ export default function ProductListPage() {
               <div className="space-y-1">
                 <p className="text-[11px] font-medium text-zinc-400">{product.color}</p>
                 <h3 className="truncate text-sm font-medium text-zinc-700 transition group-hover:text-zinc-950">
-                  {product.title}
+                  {product.name}
                 </h3>
                 <p className="text-sm font-bold text-zinc-950">
                   {product.price.toLocaleString()}원
