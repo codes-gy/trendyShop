@@ -52,6 +52,24 @@ class PaymentResponse(BaseModel):
         from_attributes = True
 
 
+class DeliveryCreateRequest(BaseModel):
+    """[관리자] 배송 등록 요청 구조 (결제 완료된 주문에 대해서만 등록 가능)"""
+
+    orderId: int
+    carrier: str = Field(..., min_length=1, description="택배사명 (예: CJ대한통운)")
+    trackingNumber: str = Field(..., min_length=1, description="운송장 번호")
+    recipientName: str = Field(..., min_length=1, description="수령인 이름")
+    recipientPhone: str = Field(..., min_length=1, description="수령인 연락처")
+
+
+class DeliveryStatusUpdateRequest(BaseModel):
+    """[관리자] 배송 상태/운송장 정보 변경 요청 구조 (전달된 필드만 부분 수정)"""
+
+    status: Literal["PREPARING", "DISPATCHED", "IN_TRANSIT", "DELIVERED"] | None = None
+    carrier: str | None = None
+    trackingNumber: str | None = None
+
+
 class DeliveryResponse(BaseModel):
     """실시간 배송 추적 정보 반환 스키마"""
 

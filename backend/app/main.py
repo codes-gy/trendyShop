@@ -4,6 +4,7 @@ from app.errors.customError import init_exception_handlers
 from app.lib.prisma import db as prisma
 from app.routers.authRouter import router as authRouter
 from app.routers.cartRouter import router as cartRouter
+from app.routers.deliveryRouter import router as deliveryRouter
 from app.routers.orderRouter import router as orderRouter
 from app.routers.productRouter import router as productRouter
 from fastapi import FastAPI
@@ -42,6 +43,7 @@ app.include_router(authRouter, prefix="/auth")
 app.include_router(productRouter, prefix="/products")
 app.include_router(cartRouter, prefix="/cart")
 app.include_router(orderRouter, prefix="/orders")
+app.include_router(deliveryRouter, prefix="/deliveries")
 
 
 @app.get("/test")
