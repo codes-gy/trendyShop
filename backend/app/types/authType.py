@@ -9,9 +9,7 @@ class SignupRequest(BaseModel):
     """회원가입 요청 바디 데이터"""
 
     email: EmailStr
-    password: str | None = Field(
-        None, description="비밀번호는 최소 8자 이상이어야 합니다."
-    )
+    password: str | None = Field(None, description="비밀번호는 최소 8자 이상이어야 합니다.")
     name: str = Field(..., description="사용자 이름")
     role: Literal["USER", "ADMIN", "SUPER_ADMIN"] = "USER"
     provider: Literal["LOCAL", "KAKAO", "GOOGLE", "NAVER"] = "LOCAL"
@@ -47,6 +45,7 @@ class SignupRequest(BaseModel):
 
         return self
 
+
 class LoginRequest(BaseModel):
     """로컬 로그인 요청 바디 데이터"""
 
@@ -59,6 +58,7 @@ class LoginRequest(BaseModel):
         if not v or not v.strip():
             raise ValueError("비밀번호를 입력해주세요.")
         return v
+
 
 class UpdateMeRequest(BaseModel):
     """내 정보 수정 요청 바디 데이터 (이름 및 이메일만 변경 허용)"""
@@ -105,9 +105,24 @@ class UserResponse(BaseModel):
     name: str
     role: Literal["USER", "ADMIN", "SUPER_ADMIN"]
     provider: Literal["LOCAL", "KAKAO", "GOOGLE", "NAVER"]
-    providerId : str | None
+    providerId: str | None
     createdAt: datetime
     updatedAt: datetime
 
     class Config:
         from_attributes = True
+
+
+class RoleUpdateRequest(BaseModel):
+    """[관리자] 회원 권한 변경 요청 구조 (SUPER_ADMIN 관련 제약은 서비스 레이어에서 검증)"""
+
+    role: Literal["USER", "ADMIN", "SUPER_ADMIN"]
+
+
+class AdminUserListQuery(BaseModel):
+    """[관리자] 회원 목록 조회용 쿼리 스트링 명세"""
+
+    keyword: str | None = None
+    role: Literal["USER", "ADMIN", "SUPER_ADMIN"] | None = None
+    page: int = Field(1, ge=1)
+    limit: int = Field(20, ge=1, le=100)
