@@ -108,7 +108,7 @@ export default function UltimateCartPage() {
             </h1>
           </div>
           {/* 결제 단계 UX 표시 */}
-          <div className="flex items-center space-x-3 text-xs font-bold tracking-wide">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold tracking-wide sm:gap-x-3 sm:text-xs">
             <span className="border-b-2 border-zinc-950 pb-0.5 text-zinc-950">
               01 장바구니
             </span>
