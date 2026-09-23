@@ -81,15 +81,22 @@ def _install_fake_prisma() -> None:
     if "prisma" in sys.modules and getattr(sys.modules["prisma"], "__fake__", False):
         return
 
+    # prisma.errors는 생성된 클라이언트에 의존하지 않는 순수 예외 클래스 모듈이라
+    # 실제 pip 패키지의 것을 그대로 사용합니다. (예: ReviewService가
+    # `from prisma.errors import UniqueViolationError`로 임포트합니다.)
+    import prisma.errors as real_errors_module
+
     fake_prisma = types.ModuleType("prisma")
     fake_prisma.__fake__ = True
     fake_prisma.Prisma = FakePrisma
+    fake_prisma.errors = real_errors_module
 
     fake_client_submodule = types.ModuleType("prisma.client")
     fake_client_submodule.Prisma = FakePrisma
 
     sys.modules["prisma"] = fake_prisma
     sys.modules["prisma.client"] = fake_client_submodule
+    sys.modules["prisma.errors"] = real_errors_module
 
 
 # 테스트 파일들이 `app.*`를 임포트하기 전에 반드시 먼저 실행되어야 하므로
