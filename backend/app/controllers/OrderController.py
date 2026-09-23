@@ -44,3 +44,14 @@ async def approvePayment(user_id: int, body: PaymentApproveRequest):
         "message": "결제가 승인되었습니다.",
         "data": data,
     }
+
+
+async def cancelOrder(user_id: int, order_id: int, is_admin: bool):
+    # 주문 취소
+
+    data = await orderService.cancelOrder(user_id, order_id, is_admin)
+    return {
+        "success": True,
+        "message": "주문이 취소되었습니다.",
+        "data": data,
+    }

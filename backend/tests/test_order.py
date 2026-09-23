@@ -363,3 +363,98 @@ def test_approve_payment_negative_amount_returns_422():
     )
 
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+# -----------------------------------------------------------------
+# 주문 취소 (PATCH /orders/{id}/cancel)
+# -----------------------------------------------------------------
+def test_cancel_order_requires_authentication():
+    resp = client.patch("/orders/1/cancel")
+    assert resp.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+def test_cancel_order_success_restocks_products(monkeypatch):
+    _as_user()
+
+    async def fake_find_by_id(order_id):
+        return _sample_order(
+            id=1,
+            userId=1,
+            status="PAID",
+            orderItems=[
+                {"productId": 1, "quantity": 2},
+                {"productId": 2, "quantity": 3},
+            ],
+        )
+
+    captured = {}
+
+    async def fake_cancel_with_restock(order_id, order_items):
+        captured["order_id"] = order_id
+        captured["order_items"] = order_items
+        return _sample_order(id=1, status="CANCELLED")
+
+    monkeypatch.setattr(orderRepository, "findById", fake_find_by_id)
+    monkeypatch.setattr(orderRepository, "cancelOrderWithRestock", fake_cancel_with_restock)
+
+    resp = client.patch("/orders/1/cancel")
+
+    assert resp.status_code == status.HTTP_200_OK
+    assert resp.json()["data"]["status"] == "CANCELLED"
+    assert captured["order_id"] == 1
+    assert captured["order_items"] == [
+        {"productId": 1, "quantity": 2},
+        {"productId": 2, "quantity": 3},
+    ]
+
+
+def test_cancel_order_not_found(monkeypatch):
+    _as_user()
+
+    async def fake_find_by_id(order_id):
+        return None
+
+    monkeypatch.setattr(orderRepository, "findById", fake_find_by_id)
+
+    resp = client.patch("/orders/999/cancel")
+
+    assert resp.status_code == status.HTTP_404_NOT_FOUND
+
+
+def test_cancel_order_forbidden_for_other_users_order(monkeypatch):
+    _as_user(USER)  # id=1
+
+    async def fake_find_by_id(order_id):
+        return _sample_order(id=1, userId=2, status="PAID")
+
+    monkeypatch.setattr(orderRepository, "findById", fake_find_by_id)
+
+    resp = client.patch("/orders/1/cancel")
+
+    assert resp.status_code == status.HTTP_403_FORBIDDEN
+
+
+def test_cancel_order_already_shipped_rejected(monkeypatch):
+    _as_user()
+
+    async def fake_find_by_id(order_id):
+        return _sample_order(id=1, userId=1, status="SHIPPED")
+
+    monkeypatch.setattr(orderRepository, "findById", fake_find_by_id)
+
+    resp = client.patch("/orders/1/cancel")
+
+    assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+
+def test_cancel_order_already_cancelled_rejected(monkeypatch):
+    _as_user()
+
+    async def fake_find_by_id(order_id):
+        return _sample_order(id=1, userId=1, status="CANCELLED")
+
+    monkeypatch.setattr(orderRepository, "findById", fake_find_by_id)
+
+    resp = client.patch("/orders/1/cancel")
+
+    assert resp.status_code == status.HTTP_400_BAD_REQUEST

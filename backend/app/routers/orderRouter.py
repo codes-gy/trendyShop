@@ -7,6 +7,8 @@ from fastapi import APIRouter, Depends, status
 
 router = APIRouter(tags=["Order"])
 
+_ADMIN_ROLES = {"ADMIN", "SUPER_ADMIN"}
+
 
 @router.get("")
 async def listOrders(user: Annotated[dict, Depends(jwt_authenticate)]):
@@ -35,3 +37,12 @@ async def approvePayment(
     user: Annotated[dict, Depends(jwt_authenticate)],
 ):
     return await order_controller.approvePayment(user.get("id"), body)
+
+
+@router.patch("/{order_id}/cancel")
+async def cancelOrder(
+    order_id: int,
+    user: Annotated[dict, Depends(jwt_authenticate)],
+):
+    is_admin = user.get("role") in _ADMIN_ROLES
+    return await order_controller.cancelOrder(user.get("id"), order_id, is_admin)
