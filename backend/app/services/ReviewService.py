@@ -5,6 +5,7 @@ from app.repositories import ReviewRepository as reviewRepository
 from app.services import ProductService as productService
 from app.types.reviewType import ReviewCreateRequest, ReviewUpdateRequest
 from fastapi import HTTPException, status
+from prisma.errors import UniqueViolationError
 
 
 async def listReviews(product_id: int, page: int, limit: int) -> dict[str, Any]:
@@ -51,7 +52,15 @@ async def createReview(user_id: int, data: ReviewCreateRequest) -> dict[str, Any
             detail="이미 리뷰를 작성한 상품입니다.",
         )
 
-    return await reviewRepository.create(user_id, data.productId, data.rating, data.comment)
+    try:
+        return await reviewRepository.create(user_id, data.productId, data.rating, data.comment)
+    except UniqueViolationError:
+        # 동시 요청 경합(race condition)으로 애플리케이션 레벨 중복 체크를 통과했더라도,
+        # DB의 (userId, productId) 유니크 제약이 최종 방어선 역할을 합니다.
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="이미 리뷰를 작성한 상품입니다.",
+        ) from None
 
 
 async def _getOwnedReview(review_id: int, user_id: int) -> dict[str, Any]:

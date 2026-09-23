@@ -8,6 +8,7 @@ from app.repositories import ProductRepository as productRepository
 from app.repositories import ReviewRepository as reviewRepository
 from fastapi import status
 from fastapi.testclient import TestClient
+from prisma.errors import UniqueViolationError
 
 client = TestClient(app, raise_server_exceptions=False)
 
@@ -156,6 +157,32 @@ def test_create_review_duplicate_rejected(monkeypatch):
     monkeypatch.setattr(productRepository, "findById", fake_product_find_by_id)
     monkeypatch.setattr(orderRepository, "hasPurchasedProduct", fake_has_purchased)
     monkeypatch.setattr(reviewRepository, "findByUserAndProduct", fake_find_existing)
+
+    resp = client.post("/reviews", json={"productId": 1, "rating": 5, "comment": "정말 만족스러워요"})
+
+    assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+
+def test_create_review_race_condition_db_constraint_rejected(monkeypatch):
+    # 애플리케이션 레벨 중복 체크는 통과했지만(동시 요청), DB 유니크 제약이 막아주는 경우
+    _as_user()
+
+    async def fake_product_find_by_id(product_id):
+        return _sample_product(id=1)
+
+    async def fake_has_purchased(user_id, product_id):
+        return True
+
+    async def fake_find_existing(user_id, product_id):
+        return None
+
+    async def fake_create(user_id, product_id, rating, comment):
+        raise UniqueViolationError({}, message="duplicate key value violates unique constraint")
+
+    monkeypatch.setattr(productRepository, "findById", fake_product_find_by_id)
+    monkeypatch.setattr(orderRepository, "hasPurchasedProduct", fake_has_purchased)
+    monkeypatch.setattr(reviewRepository, "findByUserAndProduct", fake_find_existing)
+    monkeypatch.setattr(reviewRepository, "create", fake_create)
 
     resp = client.post("/reviews", json={"productId": 1, "rating": 5, "comment": "정말 만족스러워요"})
 
