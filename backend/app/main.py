@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from app.errors.customError import init_exception_handlers
 from app.lib.prisma import db as prisma
+from app.routers.adminRouter import router as adminRouter
 from app.routers.authRouter import router as authRouter
 from app.routers.cartRouter import router as cartRouter
 from app.routers.deliveryRouter import router as deliveryRouter
@@ -46,6 +47,7 @@ app.include_router(cartRouter, prefix="/cart")
 app.include_router(orderRouter, prefix="/orders")
 app.include_router(deliveryRouter, prefix="/deliveries")
 app.include_router(reviewRouter, prefix="/reviews")
+app.include_router(adminRouter, prefix="/admin/users")
 
 
 @app.get("/test")
