@@ -9,9 +9,20 @@ CI 환경 및 로컬 환경에서 `prisma generate`로 생성되는 실제 DB �
 메서드를 `monkeypatch`로 원하는 값을 반환하도록 다시 오버라이드해서 사용합니다.
 """
 
+import os
 import sys
 import types
 from unittest.mock import AsyncMock, MagicMock
+
+# 테스트 실행에 필요한 최소 환경변수 (.env가 없는 CI에서도 JWT 발급/검증이 동작하도록 기본값을 채웁니다.)
+# app.lib.env는 임포트 시점에 환경변수를 읽으므로 반드시 앱 모듈 임포트보다 먼저 설정해야 합니다.
+os.environ.setdefault("JWT_ALGORITHM", "HS256")
+os.environ.setdefault("JWT_ACCESS_TOKEN_SECRET", "test-access-secret-key-for-pytest-only-0123456789")
+os.environ.setdefault("JWT_REFRESH_TOKEN_SECRET", "test-refresh-secret-key-for-pytest-only-0123456789")
+os.environ.setdefault("ACCESS_TOKEN_COOKIE_NAME", "accessToken")
+os.environ.setdefault("REFRESH_TOKEN_COOKIE_NAME", "refreshToken")
+# 테스트에서 실수로 실제 PG를 호출하지 않도록 기본은 가짜 게이트웨이를 사용합니다.
+os.environ.setdefault("PAYMENT_GATEWAY", "fake")
 
 _MODEL_METHODS = (
     "find_unique",
@@ -19,7 +30,9 @@ _MODEL_METHODS = (
     "find_many",
     "create",
     "update",
+    "update_many",
     "delete",
+    "delete_many",
     "upsert",
     "count",
 )
@@ -45,6 +58,7 @@ _KNOWN_MODEL_ACCESSORS = (
     "payment",
     "delivery",
     "review",
+    "refreshtoken",
 )
 
 

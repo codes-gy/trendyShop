@@ -3,6 +3,23 @@ from typing import Any
 
 from app.lib.prisma import db as prisma
 
+
+class InsufficientStockError(Exception):
+    """주문 트랜잭션 안에서 재고 차감(조건부 UPDATE)이 실패했을 때 발생합니다. (재고 부족/판매 중지/삭제)"""
+
+    def __init__(self, product_id: int):
+        super().__init__(f"재고 차감 실패 (productId={product_id})")
+        self.product_id = product_id
+
+
+class OrderStatusConflictError(Exception):
+    """주문 상태 전이(compare-and-set)가 실패했을 때 발생합니다. (다른 요청이 먼저 상태를 바꾼 경우)"""
+
+    def __init__(self, order_id: int):
+        super().__init__(f"주문 상태가 이미 변경되었습니다. (orderId={order_id})")
+        self.order_id = order_id
+
+
 _INCLUDE_FULL = {
     "orderItems": True,
     "payment": True,
@@ -47,6 +64,23 @@ async def createOrderWithItems(
       (중간에 하나라도 실패하면 전체가 롤백됩니다.)
     """
     async with prisma.tx() as transaction:
+        # 1) 재고 차감: "재고가 충분하고 판매 중인 경우에만" 차감하는 조건부 UPDATE 한 문장으로 처리합니다.
+        #    UPDATE "Product" SET stock = stock - :qty WHERE id = :id AND stock >= :qty AND ...
+        #    동시에 같은 상품을 주문해도 DB가 행 잠금 후 WHERE 조건을 다시 평가하므로 재고가 음수가 되지 않습니다.
+        #    영향받은 행이 0이면 예외를 던져 트랜잭션 전체(이미 차감한 다른 상품 포함)를 롤백합니다.
+        for item in order_items:
+            updated_count = await transaction.product.update_many(
+                where={
+                    "id": item["productId"],
+                    "stock": {"gte": item["quantity"]},
+                    "isAvailable": True,
+                    "deletedAt": None,
+                },
+                data={"stock": {"decrement": item["quantity"]}},
+            )
+            if updated_count != 1:
+                raise InsufficientStockError(item["productId"])
+
         new_order = await transaction.order.create(
             data={
                 "userId": user_id,
@@ -57,14 +91,8 @@ async def createOrderWithItems(
             include=_INCLUDE_FULL,
         )
 
-        for item in order_items:
-            await transaction.product.update(
-                where={"id": item["productId"]},
-                data={"stock": {"decrement": item["quantity"]}},
-            )
-
         if cart_item_ids:
-            await transaction.cartitem.delete_many(where={"id": {"in": cart_item_ids}})
+            await transaction.cartitem.delete_many(where={"id": {"in": cart_item_ids}, "userId": user_id})
 
     return new_order.model_dump()
 
@@ -81,20 +109,35 @@ async def updateStatus(order_id: int, order_status: str) -> dict[str, Any]:
     return updated.model_dump()
 
 
-async def createPayment(order_id: int, payment_key: str, method: str, amount: int) -> dict[str, Any]:
+async def markPaidWithPayment(order_id: int, payment_key: str, method: str, amount: int) -> dict[str, Any]:
     """
-    [결제 정보 생성] (Order와 1:1 관계)
+    [결제 완료 처리 트랜잭션]
+    - 주문 상태를 PENDING → PAID로 "PENDING인 경우에만" 전환(compare-and-set)하고, 결제 정보를 생성합니다.
+    - 두 작업을 하나의 트랜잭션으로 묶어, 둘 중 하나라도 실패하면 함께 롤백됩니다.
+    - 그 사이 주문이 만료/취소되었다면 OrderStatusConflictError,
+      같은 paymentKey/주문으로 이미 결제가 저장되어 있다면 prisma UniqueViolationError가 발생합니다.
     """
-    payment = await prisma.payment.create(
-        data={
-            "orderId": order_id,
-            "paymentKey": payment_key,
-            "method": method,
-            "amount": amount,
-            "paidAt": datetime.now(UTC),
-        }
-    )
-    return payment.model_dump()
+    async with prisma.tx() as transaction:
+        updated_count = await transaction.order.update_many(
+            where={"id": order_id, "status": "PENDING"},
+            data={"status": "PAID"},
+        )
+        if updated_count != 1:
+            raise OrderStatusConflictError(order_id)
+
+        await transaction.payment.create(
+            data={
+                "orderId": order_id,
+                "paymentKey": payment_key,
+                "method": method,
+                "amount": amount,
+                "paidAt": datetime.now(UTC),
+            }
+        )
+
+        paid_order = await transaction.order.find_unique(where={"id": order_id}, include=_INCLUDE_FULL)
+
+    return paid_order.model_dump()
 
 
 async def hasPurchasedProduct(user_id: int, product_id: int) -> bool:
@@ -116,23 +159,33 @@ async def hasPurchasedProduct(user_id: int, product_id: int) -> bool:
     return order_item is not None
 
 
-async def cancelOrderWithRestock(order_id: int, order_items: list[dict[str, Any]]) -> dict[str, Any]:
+async def cancelOrderWithRestock(
+    order_id: int,
+    order_items: list[dict[str, Any]],
+    from_statuses: list[str] | None = None,
+) -> dict[str, Any]:
     """
     [주문 취소 트랜잭션]
-    - 각 주문 아이템 수량만큼 상품 재고를 복구하고, 주문 상태를 CANCELLED로 전환합니다.
-      (재고 차감은 주문 생성 시점에 이루어지므로, PENDING/PAID 상태 모두 복구가 필요합니다.)
+    - 주문 상태를 "from_statuses(기본 PENDING/PAID) 중 하나인 경우에만" CANCELLED로 전환합니다. (compare-and-set)
+    - 상태 전환에 성공한 경우에만 각 주문 아이템 수량만큼 재고를 복구합니다.
+      그래서 취소 요청이 동시에 두 번 들어오거나 자동 만료와 겹쳐도 재고가 두 번 복구되지 않습니다.
+    - 전환에 실패하면(이미 다른 요청이 취소/배송 처리함) OrderStatusConflictError가 발생합니다.
     """
+    statuses = from_statuses or ["PENDING", "PAID"]
     async with prisma.tx() as transaction:
+        updated_count = await transaction.order.update_many(
+            where={"id": order_id, "status": {"in": statuses}},
+            data={"status": "CANCELLED"},
+        )
+        if updated_count != 1:
+            raise OrderStatusConflictError(order_id)
+
         for item in order_items:
             await transaction.product.update(
                 where={"id": item["productId"]},
                 data={"stock": {"increment": item["quantity"]}},
             )
 
-        cancelled_order = await transaction.order.update(
-            where={"id": order_id},
-            data={"status": "CANCELLED"},
-            include=_INCLUDE_FULL,
-        )
+        cancelled_order = await transaction.order.find_unique(where={"id": order_id}, include=_INCLUDE_FULL)
 
     return cancelled_order.model_dump()

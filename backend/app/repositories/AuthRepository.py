@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from typing import Any
 
 from app.lib.prisma import db as prisma
@@ -30,7 +31,9 @@ async def createUser(user_dict: dict[str, Any]) -> dict[str, Any]:
             "email": user_dict["email"],
             "password": user_dict.get("password"),
             "name": user_dict["name"],
-            "role": user_dict.get("role", "USER"),
+            # 권한은 클라이언트 입력과 무관하게 항상 기본 권한(USER)으로 생성합니다.
+            # (관리자 권한 부여는 /admin/users/{id}/role 에서만 가능합니다.)
+            "role": "USER",
             "provider": user_dict.get("provider", "LOCAL"),
             "providerId": user_dict.get("providerId"),
         }
@@ -47,17 +50,59 @@ async def updateUser(user_id: int, update_data: dict[str, Any]) -> dict[str, Any
         data={
             "email": update_data.get("email"),
             "name": update_data.get("name"),
-        }
+        },
     )
     return updated_user.model_dump()
 
 
-# 💡 임시 보관함 가이드 라인 함수 정의 추가 (서비스 레이어 에러 방지 목적)
-async def update_refresh_token(user_id: int, refresh_token: str) -> None:
-    pass
+# -----------------------------------------------------------------
+# 리프레시 토큰 저장소 (RefreshToken 테이블)
+# - 토큰 원문은 저장하지 않고 SHA-256 해시(tokenHash)만 저장합니다.
+# -----------------------------------------------------------------
+async def saveRefreshToken(user_id: int, token_hash: str, expires_at: datetime) -> None:
+    """[로그인 시 발급한 리프레시 토큰 저장]"""
+    await prisma.refreshtoken.create(
+        data={
+            "userId": int(user_id),
+            "tokenHash": token_hash,
+            "expiresAt": expires_at,
+        }
+    )
 
-async def get_refresh_token(user_id: int) -> str | None:
-    return None
 
-async def clear_refresh_token(user_id: int) -> None:
-    pass
+async def findRefreshTokenByHash(token_hash: str) -> dict[str, Any] | None:
+    """[해시로 리프레시 토큰 레코드 조회]"""
+    record = await prisma.refreshtoken.find_unique(where={"tokenHash": token_hash})
+    return record.model_dump() if record else None
+
+
+async def rotateRefreshToken(old_token_id: int, user_id: int, new_token_hash: str, new_expires_at: datetime) -> bool:
+    """
+    [리프레시 토큰 회전 트랜잭션]
+    - 기존 토큰을 "아직 폐기되지 않은 경우에만" 폐기(compare-and-set)하고 새 토큰을 저장합니다.
+    - 동시에 같은 토큰으로 두 번 재발급을 요청하면 한쪽만 성공하고, 나머지는 False를 받습니다.
+    """
+    async with prisma.tx() as transaction:
+        revoked_count = await transaction.refreshtoken.update_many(
+            where={"id": old_token_id, "revokedAt": None},
+            data={"revokedAt": datetime.now(UTC)},
+        )
+        if revoked_count != 1:
+            return False
+
+        await transaction.refreshtoken.create(
+            data={
+                "userId": int(user_id),
+                "tokenHash": new_token_hash,
+                "expiresAt": new_expires_at,
+            }
+        )
+    return True
+
+
+async def revokeAllRefreshTokens(user_id: int) -> int:
+    """[해당 유저의 활성 리프레시 토큰 전체 폐기] (로그아웃, 토큰 재사용 탐지 시)"""
+    return await prisma.refreshtoken.update_many(
+        where={"userId": int(user_id), "revokedAt": None},
+        data={"revokedAt": datetime.now(UTC)},
+    )

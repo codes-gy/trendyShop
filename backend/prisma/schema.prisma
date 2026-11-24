@@ -55,9 +55,10 @@ model User {
   updatedAt  DateTime @updatedAt
 
   // 관계 설정
-  orders    Order[]
-  cartItems CartItem[]
-  reviews   Review[] // 유저가 작성한 리뷰 목록 (1:N)
+  orders        Order[]
+  cartItems     CartItem[]
+  reviews       Review[] // 유저가 작성한 리뷰 목록 (1:N)
+  refreshTokens RefreshToken[] // 발급된 리프레시 토큰 목록 (회전/폐기 추적용)
 
   @@index([provider, providerId])
 }
@@ -124,7 +125,7 @@ model Order {
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   orderItems OrderItem[]
   payment    Payment? // 주문 한 개당 결제 정보는 한 개 존재 (1:1)
-  deliveries  Delivery[] // 주문 한 개당 배송 정보는 여러 개
+  deliveries Delivery[] // 주문 한 개당 배송 정보는 여러 개
 
   @@index([userId, createdAt(sort: Desc)])
 }
@@ -153,7 +154,7 @@ model OrderItem {
 model Payment {
   id         Int           @id @default(autoincrement())
   orderId    Int           @unique // 1:1 관계를 위한 유니크 조건
-  paymentKey String? // 외부 PG사 거래 고유 키
+  paymentKey String?       @unique // 외부 PG사 거래 고유 키 (중복 승인 방지)
   method     PaymentMethod @default(CARD) // 결제 수단
   amount     Int // 실제 결제 승인 금액
   paidAt     DateTime? // 실제 결제 완료 일시
@@ -198,4 +199,19 @@ model Review {
 
   @@unique([userId, productId])
   @@index([productId, createdAt(sort: Desc)])
+}
+
+// 리프레시 토큰 저장소 (회전 및 로그아웃 시 폐기 추적)
+// - 토큰 원문은 저장하지 않고 SHA-256 해시만 저장합니다.
+model RefreshToken {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  tokenHash String    @unique // 리프레시 토큰 원문의 SHA-256 해시
+  expiresAt DateTime
+  revokedAt DateTime? // 회전(재발급) 또는 로그아웃으로 폐기된 시각
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

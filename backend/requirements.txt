@@ -24,6 +24,7 @@ pycparser==3.0
 pydantic==2.13.4
 pydantic_core==2.46.4
 PyJWT==2.13.0
+pytest==9.2.0
 python-dotenv==1.2.2
 PyYAML==6.0.3
 ruff==0.15.20

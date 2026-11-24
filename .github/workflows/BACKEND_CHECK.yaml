@@ -33,3 +33,52 @@ jobs:
         run: |
           ruff format .
           ruff check .
+
+      - name: 6. 단위 테스트
+        run: pytest -q
+
+  backend-integration:
+    # 실제 PostgreSQL 위에서 트랜잭션/동시성(재고 초과 판매, 중복 재고 복구, 결제 멱등성, 토큰 회전)을 검증합니다.
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: trendy_user
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: trendy_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U trendy_user -d trendy_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://trendy_user:postgres@localhost:5432/trendy_test
+
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: 1. 코드 가져오기
+        uses: actions/checkout@v4
+
+      - name: 2. 파이썬 환경 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: 3. 의존성 설치
+        run: pip install -r requirements.txt
+
+      - name: 4. 프리즈마 클라이언트 생성 및 마이그레이션 적용
+        run: |
+          prisma generate
+          prisma migrate deploy
+
+      - name: 5. 통합(동시성) 테스트
+        run: pytest tests_integration -q

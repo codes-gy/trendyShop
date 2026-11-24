@@ -1,7 +1,9 @@
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from app.lib import payment as paymentLib
 from app.lib.passport.index import jwt_authenticate
+from app.lib.payment import FakePaymentGateway
 from app.main import app
 from app.repositories import CartRepository as cartRepository
 from app.repositories import OrderRepository as orderRepository
@@ -139,9 +141,10 @@ def test_get_order_auto_expires_stale_pending_order(monkeypatch):
 
     captured = {}
 
-    async def fake_cancel_with_restock(order_id, order_items):
+    async def fake_cancel_with_restock(order_id, order_items, from_statuses=None):
         captured["order_id"] = order_id
         captured["order_items"] = order_items
+        captured["from_statuses"] = from_statuses
         return _sample_order(id=1, status="CANCELLED")
 
     monkeypatch.setattr(orderRepository, "findById", fake_find_by_id)
@@ -153,6 +156,8 @@ def test_get_order_auto_expires_stale_pending_order(monkeypatch):
     assert resp.json()["data"]["status"] == "CANCELLED"
     assert captured["order_id"] == 1
     assert captured["order_items"] == [{"productId": 1, "quantity": 2}]
+    # 자동 만료는 "아직 PENDING인 경우에만" 취소해야 합니다. (그 사이 결제된 주문을 취소하면 안 됨)
+    assert captured["from_statuses"] == ["PENDING"]
 
 
 def test_get_order_does_not_expire_fresh_pending_order(monkeypatch):
@@ -166,7 +171,7 @@ def test_get_order_does_not_expire_fresh_pending_order(monkeypatch):
             createdAt=datetime.now(UTC),  # 방금 생성됨
         )
 
-    async def fake_cancel_with_restock(order_id, order_items):
+    async def fake_cancel_with_restock(order_id, order_items, from_statuses=None):
         raise AssertionError("만료 기준 이내인 주문은 취소되면 안 됩니다.")
 
     monkeypatch.setattr(orderRepository, "findById", fake_find_by_id)
@@ -314,18 +319,16 @@ def test_approve_payment_success(monkeypatch):
     async def fake_find_by_id(order_id):
         return _sample_order(id=1, userId=1, status="PENDING", totalPrice=20000)
 
-    async def fake_create_payment(order_id, payment_key, method, amount):
+    async def fake_mark_paid(order_id, payment_key, method, amount):
         assert order_id == 1
+        assert payment_key == "pg_key_123"
         assert amount == 20000
-        return {"id": 1}
-
-    async def fake_update_status(order_id, order_status):
-        assert order_status == "PAID"
         return _sample_order(id=1, status="PAID", totalPrice=20000)
 
+    gateway = FakePaymentGateway()
+    monkeypatch.setattr(paymentLib, "getPaymentGateway", lambda: gateway)
     monkeypatch.setattr(orderRepository, "findById", fake_find_by_id)
-    monkeypatch.setattr(orderRepository, "createPayment", fake_create_payment)
-    monkeypatch.setattr(orderRepository, "updateStatus", fake_update_status)
+    monkeypatch.setattr(orderRepository, "markPaidWithPayment", fake_mark_paid)
 
     resp = client.post(
         "/orders/payment",
@@ -339,6 +342,8 @@ def test_approve_payment_success(monkeypatch):
 
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json()["data"]["status"] == "PAID"
+    # 서버가 PG 승인 API를 직접 호출했고, 금액은 서버에 저장된 주문 금액을 사용했는지 확인합니다.
+    assert gateway.confirmed == [("pg_key_123", "trendy-order-1", 20000)]
 
 
 def test_approve_payment_amount_mismatch(monkeypatch):
@@ -398,15 +403,15 @@ def test_approve_payment_rejects_and_restocks_expired_pending_order(monkeypatch)
             orderItems=[{"productId": 1, "quantity": 2}],
         )
 
-    async def fake_cancel_with_restock(order_id, order_items):
+    async def fake_cancel_with_restock(order_id, order_items, from_statuses=None):
         return _sample_order(id=1, status="CANCELLED")
 
-    async def fake_create_payment(*args, **kwargs):
+    async def fake_mark_paid(*args, **kwargs):
         raise AssertionError("만료되어 취소된 주문에 결제가 생성되면 안 됩니다.")
 
     monkeypatch.setattr(orderRepository, "findById", fake_find_by_id)
     monkeypatch.setattr(orderRepository, "cancelOrderWithRestock", fake_cancel_with_restock)
-    monkeypatch.setattr(orderRepository, "createPayment", fake_create_payment)
+    monkeypatch.setattr(orderRepository, "markPaidWithPayment", fake_mark_paid)
 
     resp = client.post(
         "/orders/payment",
@@ -473,7 +478,7 @@ def test_cancel_order_success_restocks_products(monkeypatch):
         return _sample_order(
             id=1,
             userId=1,
-            status="PAID",
+            status="PENDING",
             orderItems=[
                 {"productId": 1, "quantity": 2},
                 {"productId": 2, "quantity": 3},
@@ -482,9 +487,10 @@ def test_cancel_order_success_restocks_products(monkeypatch):
 
     captured = {}
 
-    async def fake_cancel_with_restock(order_id, order_items):
+    async def fake_cancel_with_restock(order_id, order_items, from_statuses=None):
         captured["order_id"] = order_id
         captured["order_items"] = order_items
+        captured["from_statuses"] = from_statuses
         return _sample_order(id=1, status="CANCELLED")
 
     monkeypatch.setattr(orderRepository, "findById", fake_find_by_id)
@@ -499,6 +505,8 @@ def test_cancel_order_success_restocks_products(monkeypatch):
         {"productId": 1, "quantity": 2},
         {"productId": 2, "quantity": 3},
     ]
+    # 조회 시점의 상태(PENDING) 그대로일 때만 취소(compare-and-set)해야 합니다.
+    assert captured["from_statuses"] == ["PENDING"]
 
 
 def test_cancel_order_not_found(monkeypatch):
