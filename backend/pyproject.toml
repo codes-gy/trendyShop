@@ -34,3 +34,6 @@ skip-magic-trailing-comma = false
 [tool.pytest.ini_options]
 # pytest가 테스트를 돌릴 때 현재 작업 디렉토리(".")를 PYTHONPATH에 자동으로 산입합니다.
 pythonpath = ["."]
+# 기본 `pytest`는 Prisma를 가짜로 대체한 단위 테스트(tests/)만 실행합니다.
+# 실제 PostgreSQL이 필요한 동시성 테스트는 `pytest tests_integration`으로 따로 실행합니다. (README 참고)
+testpaths = ["tests"]
