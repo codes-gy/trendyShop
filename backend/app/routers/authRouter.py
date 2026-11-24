@@ -5,6 +5,7 @@ from app.lib.passport.index import jwt_authenticate, local_authenticate
 from app.types.authType import (
     SignupRequest,
     TokenRefreshRequest,
+    UpdateMeRequest,
     UserResponse,
 )
 from fastapi import APIRouter, Depends, status
@@ -13,9 +14,7 @@ router = APIRouter(tags=["Auth"])
 
 
 @router.post("/login")
-async def login(
-    user: Annotated[dict, Depends(local_authenticate)]
-):
+async def login(user: Annotated[dict, Depends(local_authenticate)]):
     return await auth_controller.login(user)
 
 
@@ -30,13 +29,16 @@ async def me(user: Annotated[dict, Depends(jwt_authenticate)]):
 
 
 @router.patch("/updateMe")
-async def updateMe(body : dict, user: Annotated[dict, Depends(jwt_authenticate)]):
-    return await auth_controller.updateMe(user, body)
+async def updateMe(body: UpdateMeRequest, user: Annotated[dict, Depends(jwt_authenticate)]):
+    # 컨트롤러 시그니처는 (data, user) 순서입니다. (기존에 인자 순서가 뒤바뀌어 있어 항상 401이 났습니다.)
+    return await auth_controller.updateMe(body, user)
 
-@router.post("/logout" )
+
+@router.post("/logout")
 async def logout(user: Annotated[dict, Depends(jwt_authenticate)]):
     return await auth_controller.logout(user)
 
-@router.post("/refresh" )
+
+@router.post("/refresh")
 async def refresh(body: TokenRefreshRequest):
     return await auth_controller.refresh(body)

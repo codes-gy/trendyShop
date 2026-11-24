@@ -19,6 +19,9 @@ async def jwt_strategy(token: str = Depends(oauth2_scheme)) -> dict:
         userId: str = payload.get("sub")
         if userId is None:
             raise credentials_exception
+        # 리프레시 토큰을 Access Token 자리에 넣어 쓰는 것을 차단합니다. (시크릿을 같게 설정한 경우 대비)
+        if payload.get("type") == "refresh":
+            raise credentials_exception
 
     except jwt.PyJWTError:
         raise credentials_exception from None

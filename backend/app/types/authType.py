@@ -2,18 +2,26 @@ import re
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 
 class SignupRequest(BaseModel):
-    """회원가입 요청 바디 데이터"""
+    """
+    회원가입 요청 바디 데이터
+
+    - 보안상 `role`은 입력받지 않습니다. 가입 계정은 서버에서 항상 기본 권한(USER)으로 생성되며,
+      권한 변경은 관리자 API(/admin/users/{id}/role)로만 가능합니다.
+    - 실제 OAuth 검증 없이 소셜 계정(provider/providerId)을 만들 수 있으면 남의 이메일로 비밀번호 없는
+      계정을 선점할 수 있으므로, 공개 회원가입은 이메일(LOCAL) 가입만 허용합니다.
+    - 정의되지 않은 필드(role 등)가 들어오면 조용히 무시하지 않고 422로 거부합니다.
+    """
+
+    model_config = ConfigDict(extra="forbid")
 
     email: EmailStr
-    password: str | None = Field(None, description="비밀번호는 최소 8자 이상이어야 합니다.")
+    password: str = Field(..., description="비밀번호는 최소 8자 이상이어야 합니다.")
     name: str = Field(..., description="사용자 이름")
-    role: Literal["USER", "ADMIN", "SUPER_ADMIN"] = "USER"
-    provider: Literal["LOCAL", "KAKAO", "GOOGLE", "NAVER"] = "LOCAL"
-    providerId: str | None = Field(None, description="소셜 로그인 연동 시 고유 ID")
+    provider: Literal["LOCAL"] = "LOCAL"
 
     @field_validator("name")
     @classmethod
@@ -27,23 +35,14 @@ class SignupRequest(BaseModel):
             raise ValueError("이름에는 특수문자를 포함할 수 없습니다.")
         return cleaned
 
-    @model_validator(mode="after")
-    def validate_provider_dependencies(self) -> "SignupRequest":
-        # 일반 로컬 회원가입일 때
-        if self.provider == "LOCAL":
-            if not self.password or not self.password.strip():
-                raise ValueError("일반 이메일 회원가입 시 비밀번호는 필수입니다.")
-            if len(self.password) < 8:
-                raise ValueError("비밀번호는 최소 8자 이상이어야 합니다.")
-
-        # 소셜 가입(간편 로그인)일 때
-        else:
-            if not self.providerId or not self.providerId.strip():
-                raise ValueError(f"{self.provider} 회원가입 시 소셜 연동은 필수입니다.")
-            # 보안상 소셜 가입 유저의 패스워드는 무조건 비워둠(None)
-            self.password = None
-
-        return self
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("일반 이메일 회원가입 시 비밀번호는 필수입니다.")
+        if len(v) < 8:
+            raise ValueError("비밀번호는 최소 8자 이상이어야 합니다.")
+        return v
 
 
 class LoginRequest(BaseModel):
