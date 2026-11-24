@@ -26,10 +26,10 @@ Python 기반 고성능 비동기 프레임워크인 FastAPI와 Next.js App Rout
 
 | 도메인 | 설명 |
 | --- | --- |
-| **인증 (Auth)** | 이메일 회원가입/로그인, JWT 발급·재발급, 내 정보 조회·수정, 로그아웃. `provider` 필드로 소셜 로그인(카카오/구글/네이버) 스키마를 지원 (실제 OAuth 연동은 미구현) |
+| **인증 (Auth)** | 이메일 회원가입/로그인, JWT 발급·재발급(리프레시 토큰 회전 + 재사용 탐지), 내 정보 조회·수정, 로그아웃(리프레시 토큰 폐기). 가입 시 권한은 항상 `USER`로 고정. `provider` 필드로 소셜 로그인(카카오/구글/네이버) 스키마는 있으나 실제 OAuth 연동은 미구현이라 공개 회원가입·로그인은 이메일(LOCAL)만 허용 |
 | **상품 (Product)** | 키워드/가격/판매여부 검색·필터, 정렬, 페이지네이션, 상세 조회. 등록/수정/삭제(소프트 딜리트)는 관리자 전용 |
 | **장바구니 (Cart)** | 담기(이미 담긴 상품이면 수량 병합), 목록, 수량 변경, 삭제. 재고·판매 상태 검증 |
-| **주문 (Order)** | 장바구니 선택 체크아웃(주문 스냅샷 생성 + 재고 차감을 트랜잭션으로 처리), 결제 승인, 주문 취소(+재고 복구), 결제 대기(PENDING) 주문 자동 만료 |
+| **주문 (Order)** | 장바구니 선택 체크아웃(주문 스냅샷 생성 + 조건부 재고 차감을 한 트랜잭션으로 처리해 초과 판매 방지), 결제 승인(서버에서 PG 승인 API 호출로 금액 검증, paymentKey 중복 방지), 주문 취소(상태 compare-and-set 후 재고 1회 복구), 결제 대기(PENDING) 주문 자동 만료 |
 | **배송 (Delivery)** | 관리자 전용 배송 등록·상태 변경. 배송 상태에 따라 주문 상태 자동 동기화 (배송시작→SHIPPED, 전량배송완료→DELIVERED) |
 | **리뷰 (Review)** | 실구매자만 작성 가능, 동일 상품 중복 작성 방지(DB 유니크 제약), 본인 수정/본인 또는 관리자 삭제 |
 | **관리자 (Admin)** | 전체 회원 목록/상세 조회, 권한 변경 (SUPER_ADMIN 승격 및 SUPER_ADMIN 권한 변경은 SUPER_ADMIN만 가능) |
@@ -72,7 +72,7 @@ Python 기반 고성능 비동기 프레임워크인 FastAPI와 Next.js App Rout
 | GET | `/orders/{id}` | 로그인(본인) | 주문 상세 |
 | POST | `/orders` | 로그인 | 주문 생성(체크아웃) |
 | POST | `/orders/payment` | 로그인(본인) | 결제 승인 |
-| PATCH | `/orders/{id}/cancel` | 로그인(본인) 또는 관리자 | 주문 취소 |
+| PATCH | `/orders/{id}/cancel` | 로그인(본인) 또는 관리자 | 주문 취소 (결제 완료 주문은 환불 연동 전까지 관리자만) |
 
 ### Delivery (`/deliveries`)
 | Method | Path | 인증 | 설명 |
@@ -142,9 +142,18 @@ npm run dev
 | `JWT_REFRESH_TOKEN_SECRET` | Refresh Token 서명 비밀키 | (직접 생성) |
 | `ACCESS_TOKEN_COOKIE_NAME` | Access Token 쿠키 이름 | `accessToken` |
 | `REFRESH_TOKEN_COOKIE_NAME` | Refresh Token 쿠키 이름 | `refreshToken` |
-| `JWT_ACCESS_TOKEN_EXPIRES` | Access Token 만료 시간 | - |
-| `JWT_REFRESH_TOKEN_EXPIRES` | Refresh Token 만료 시간 | - |
+| `JWT_ACCESS_TOKEN_EXPIRES` | Access Token 만료 시간. 초 단위 숫자 또는 `s`/`m`/`h`/`d` 접미사. 미설정 시 `1h`. JWT `exp`와 쿠키 `max_age`에 함께 적용 | `1h` |
+| `JWT_REFRESH_TOKEN_EXPIRES` | Refresh Token 만료 시간 (형식 동일). 미설정 시 `7d` | `7d` |
 | `ORDER_PENDING_EXPIRATION_MINUTES` | 결제 대기 주문 자동 만료 기준(분). 미설정 시 기본 30 | `30` |
+| `PAYMENT_GATEWAY` | 결제 승인 게이트웨이. `toss`(기본값, 토스페이먼츠 승인 API 호출) 또는 `fake`(로컬 개발/테스트용, 항상 승인 — 운영 사용 금지) | `toss` |
+| `TOSS_PAYMENTS_SECRET_KEY` | 토스페이먼츠 시크릿 키. `PAYMENT_GATEWAY=toss`인데 비어 있으면 결제 승인이 항상 실패합니다 (fail-closed) | `test_sk_...` |
+| `TOSS_PAYMENTS_API_BASE_URL` | 토스페이먼츠 API 주소 (기본 `https://api.tosspayments.com`) | - |
+
+> 결제창(위젯) 호출 시 PG에 넘기는 `orderId`는 `trendy-order-{주문ID}` 형식이어야 합니다.
+> 서버는 결제 승인 시 이 값과 서버에 저장된 주문 금액으로 PG 승인 API를 호출하고, 응답의 금액/주문번호/상태(`DONE`)를 다시 검증합니다.
+
+> 회원가입으로는 항상 `USER` 권한 계정만 만들어집니다. 최초 관리자 계정은 DB에서 직접
+> `UPDATE "User" SET role = 'SUPER_ADMIN' WHERE email = '...';` 로 지정한 뒤, 이후에는 `/admin/users/{id}/role` API로 관리하세요.
 
 ## 테스트
 
@@ -154,11 +163,24 @@ prisma generate  # 최초 1회 (실제 DB 연결 없이도 타입 생성만 되�
 pytest
 ```
 
-현재 총 93개의 테스트가 모두 통과합니다. 실제 DB나 Prisma 엔진 바이너리 없이도 돌아가도록,
+실제 DB나 Prisma 엔진 바이너리 없이도 돌아가도록,
 `tests/conftest.py`에서 Prisma 클라이언트를 가짜(mock) 객체로 대체하고 각 테스트가
 리포지토리 함수(예: `ProductRepository.findById`)를 `monkeypatch`로 오버라이드하는 방식을
 사용합니다. 그래서 검증 대상은 서비스/컨트롤러/라우터의 로직(권한, 재고 검증, 응답 형태 등)이며,
-Prisma 쿼리 자체의 정확성이나 트랜잭션 동작은 실제 DB가 붙은 환경에서 별도로 확인이 필요합니다.
+Prisma 쿼리 자체의 정확성이나 트랜잭션 동작은 아래 통합 테스트로 별도 확인합니다.
+
+**통합(동시성) 테스트** — 실제 PostgreSQL이 필요합니다. 재고 초과 판매, 중복 재고 복구, 결제 멱등성/롤백,
+리프레시 토큰 동시 회전을 실제 트랜잭션 위에서 검증합니다. `tests/conftest.py`가 Prisma를 가짜로 바꾸기 때문에
+반드시 별도로 실행해야 합니다. (`DATABASE_URL`이 없으면 skip)
+
+```bash
+docker compose up -d postgres
+export DATABASE_URL=postgresql://trendy_user:postgres@localhost:5432/trendy_test  # 테스트 전용 DB 사용
+prisma migrate deploy
+pytest tests_integration
+```
+
+CI(`BACKEND_CHECK.yaml`)는 PR마다 `ruff` 검사, 단위 테스트(`pytest`), PostgreSQL 서비스 컨테이너 위의 통합 테스트를 실행합니다.
 
 코드 스타일 검사:
 
@@ -183,7 +205,8 @@ backend/
   prisma/
     schema.prisma   # 데이터 모델 정의
     migrations/     # 마이그레이션 이력
-  tests/            # 도메인별 pytest 테스트 (+conftest.py의 Prisma mock 설정)
+  tests/            # 도메인별 pytest 단위 테스트 (+conftest.py의 Prisma mock 설정)
+  tests_integration/ # 실제 PostgreSQL 위의 동시성/트랜잭션 통합 테스트
 frontend/
   app/              # Next.js App Router 페이지 및 컴포넌트
 ```
@@ -195,8 +218,15 @@ frontend/
   주문은 재고가 즉시 복구되지 않습니다. 주기적인 배치 정리가 필요하면 스케줄러(APScheduler 등)
   도입이 필요합니다.
 - **결제 완료(PAID) 주문을 취소할 때 결제 환불 처리는 자동화되어 있지 않습니다.** `Payment` 모델에
-  환불 상태 필드가 없어서, 재고 복구와 주문 상태 전환까지만 처리됩니다.
-- **CI(`BACKEND_CHECK.yaml`)에는 `pytest` 실행 단계가 없고 `ruff` 검사만 있습니다.** 테스트를
-  CI에서도 자동으로 돌리려면 워크플로에 `prisma generate` 이후 `pytest` 스텝 추가를 권장합니다.
+  환불 상태 필드가 없고 PG 결제 취소 API도 연동되어 있지 않습니다. 그래서 사용자는 PAID 주문을 직접 취소할 수
+  없고(409), 관리자만 취소할 수 있습니다. 관리자가 취소하면 재고 복구와 주문 상태 전환까지만 처리되므로
+  PG 관리자 화면에서 수동 환불이 필요합니다 (서버 로그에 `PG 수동 환불 필요` 경고가 남습니다).
+- **PG 승인은 성공했지만 DB 반영 직전에 주문이 만료/취소된 경우** 자동 결제 취소가 없어 서버 로그
+  (`수동 확인/환불 필요`)를 보고 수동 처리해야 합니다. 결제 웹훅, 가상계좌 입금 대기(`WAITING_FOR_DEPOSIT`)
+  처리도 미구현입니다.
+- **Access Token은 상태 없는 JWT라 로그아웃 후에도 만료 시각까지는 유효합니다.** 로그아웃은 리프레시 토큰만
+  폐기합니다. 짧은 `JWT_ACCESS_TOKEN_EXPIRES` 설정을 권장합니다.
+- **프론트엔드가 Access/Refresh Token을 `localStorage`에 저장합니다.** XSS 발생 시 토큰이 탈취될 수 있어
+  httpOnly 쿠키 + CSRF 방어 구조로의 전환이 필요합니다 (후속 작업).
 - 상품 이미지 업로드(`ProductImage`)는 API로 구현되어 있지 않습니다 (스키마와 응답 모델에는 이미
   포함되어 있으나, 별도 업로드 엔드포인트가 없습니다).
